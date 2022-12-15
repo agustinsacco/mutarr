@@ -1,0 +1,16 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "outDir": "build/server",
+        "target": "es2017",
+        "isolatedModules": false,
+        "noEmit": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "experimentalDecorators": true,
+        "typeRoots": ["./node_modules/@types", "./typings"]
+    },
+    "include": ["server/**/*.ts"],
+    "exclude": ["build", "client", "pages"]
+}

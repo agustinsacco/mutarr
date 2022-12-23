@@ -1,0 +1,6 @@
+{
+    "verbose": true,
+    "ignore": ["node_modules", "build"],
+    "watch": ["client/**/*", "server/**/*", "pages/**/*", "server/index.ts"],
+    "ext": "ts"
+}

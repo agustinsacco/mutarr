@@ -7,7 +7,6 @@ import { container } from './Registry';
 import { IConfig } from 'config';
 import { Repository } from './repositories/Repository';
 import shutdown from 'koa-graceful-shutdown';
-import Router from 'koa-router';
 import { Logger } from './utilities/Logger';
 import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
@@ -34,7 +33,7 @@ export class App {
         const socket = await this.startSocket();
         // Set socket in service
         const socketService = container.getNamed<SocketService>('Service', 'Socket');
-        socketService.setSocket(socket);
+        socketService.setServer(socket);
     }
 
     public async startServer(): Promise<void> {
@@ -44,9 +43,9 @@ export class App {
                 // Set up shopify auth
                 let inversifyKoaServer = new InversifyKoaServer(container, undefined, undefined, this.koaServer);
                 inversifyKoaServer.setConfig((app: any) => {
-                    app.use((ctx: Router.IRouterContext, next: () => Promise<any>) => {
-                        return this.logger.access(ctx, next);
-                    });
+                    // app.use((ctx: Router.IRouterContext, next: () => Promise<any>) => {
+                    //     return this.logger.access(ctx, next);
+                    // });
                     app.use(koaBody());
                     app.use(cookie());
                     app.use(koaCors());
@@ -65,10 +64,10 @@ export class App {
         });
     }
 
-    public async startSocket(): Promise<Socket> {
+    public async startSocket(): Promise<Server> {
         return new Promise((resolve, reject) => {
             const httpServer = createServer(this.koaSocketServer.callback());
-            const io = new Server(httpServer, {
+            const socket = new Server(httpServer, {
                 cors: {
                     origin: "*",
                     methods: ["GET", "POST"],
@@ -80,13 +79,7 @@ export class App {
 
             httpServer.listen(port, () => {
                 console.log(`Socket server started http://${host}:${port}`);
-                io.on("connection", (socket: Socket) => {
-                    console.log('socketListen connected!')
-                    socket.on("ping", () => {
-                        console.log('received ping from client')
-                    });
-                    resolve(<Socket>socket);
-                });
+                resolve(socket);
             });
         });
     }

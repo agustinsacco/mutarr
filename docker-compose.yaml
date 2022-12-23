@@ -14,7 +14,9 @@ services:
     volumes:
       - /mutarr/lib/node_modules
       - ./:/mutarr/lib
-      - tnas-shows:/mutarr/watch/shows
+      - ./tmp:/mutarr/tmp
+      - ~/Videos:/mutarr/watch/videos
+      # - tnas-shows:/mutarr/watch/shows
       # - tnas-movies:/mutarr/watch/movies
     command: npm run dev
     ports:

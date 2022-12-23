@@ -4,11 +4,13 @@ import { Logger } from '../utilities/Logger';
 import { Repository } from './Repository';
 import { promises } from 'fs';
 import { FSNodeModel } from '../models/FSNodeModel';
+import fs from 'fs';
 import path from 'path';
 import { FSNode, FSNodeType } from '../entities/FSNode';
+import mockNodes from '../../fsNodes.json';
 
 @injectable()
-export class FileRepository implements Repository {
+export class NodeRepository implements Repository {
     private fsNodes: FSNode[];
     private path: string;
     constructor(
@@ -21,9 +23,17 @@ export class FileRepository implements Repository {
 
     public async initialize(): Promise<void> { }
 
-    public async getNodesCustom(): Promise<FSNode[]> {
+
+    public async getCachedNodes(): Promise<FSNode[]> {
+        // fs.writeFileSync('fsNodes.json', JSON.stringify(fsNodes), 'utf-8')
+        return <any> mockNodes;
+    }
+
+    public async getNodes(): Promise<FSNode[]> {
         const path = this.config.get<string>('watchPath');
         const fsNodes = await this.parseNodes(path);
+        fs.writeFileSync('fsNodes.json', JSON.stringify(fsNodes), 'utf-8')
+
         return fsNodes;
     }
 

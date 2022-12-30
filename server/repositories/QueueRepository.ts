@@ -175,7 +175,7 @@ export class QueueRepository implements Repository {
     public async addJob(node: FSNode): Promise<void> {
         if (this.config.get<string[]>('videoFormats').includes(getFileFormat(<string>node.name))) {
         } else {
-            this.logger.log('error', 'This file is not a video.'));
+            this.logger.log('error', 'This file is not a video.');
             throw new Error('This file is not a video.');
         }
 

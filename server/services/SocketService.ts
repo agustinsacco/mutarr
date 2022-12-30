@@ -2,7 +2,6 @@ import { inject, injectable } from 'inversify';
 import { IConfig } from 'config';
 import { Logger } from '../utilities/Logger';
 import { Server } from 'socket.io';
-import { Job } from 'bull';
 import { JobCollection } from '../entities/JobCollection';
 import { FSNode } from '../entities/FSNode';
 

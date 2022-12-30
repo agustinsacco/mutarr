@@ -12,7 +12,12 @@ const useStyles = createUseStyles({
         borderRadius: 3,
         padding: 10
     },
-
+    streams: {
+        border: '1px dashed #D6D6D6',
+        borderRadius: 3,
+        padding: 5,
+        margin: 5
+    }
 });
 
 type Props = {
@@ -44,7 +49,7 @@ export const ActiveNode = (props: Props) => {
                 <Grid xs={12} css={{ marginBottom: 15 }}>
                     <Grid.Container direction="column">
                         <Text weight="bold" size={18}>{props?.node?.name}</Text>
-                        <Text size={12}>{props?.node?.path}</Text>
+                        <Text size={16}>{props?.node?.path}</Text>
                         <Grid.Container direction="row">
                             <Badge size="sm" color="primary">{props?.node?.size && readableBytes(props?.node?.size)}</Badge>
                             <Badge size="sm" color="secondary">{props?.node?.format && props?.node?.format}</Badge>
@@ -56,12 +61,13 @@ export const ActiveNode = (props: Props) => {
                     <Text>Streams</Text>
                 </Grid>
                 {props.node?.streams && props.node.streams.map((stream: any, index: number) => {
-                    if (stream.codec_name !== 'subrip') {
+                    if (stream.type !== 'data') {
                         return (
                             <Grid key={index} xs={6}>
-                                <Grid.Container direction="column">
+                                <Grid.Container direction="column" className={classes.streams}>
                                     <Text size={12}>{stream.codec_long_name}</Text>
                                     <Text size={12}>Type: {stream.codec_type}</Text>
+                                    {stream.display_aspect_ratio && <Text size={12}>Aspect ratio: {stream.display_aspect_ratio}</Text>}
                                     {stream.display_aspect_ratio && <Text size={12}>Aspect ratio: {stream.display_aspect_ratio}</Text>}
                                 </Grid.Container>
                             </Grid>

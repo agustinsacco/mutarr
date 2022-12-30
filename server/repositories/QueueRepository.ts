@@ -9,12 +9,13 @@ import { SocketService } from '../services/SocketService';
 import { JobCollection } from '../entities/JobCollection';
 import { EventEmitter } from 'events';
 import { NodeRepository } from './NodeRepository';
+import { getFileFormat } from '../utilities/File';
 
 @injectable()
 export class QueueRepository implements Repository {
     private queue;
     private jobEmitter: EventEmitter;
-    private timer: NodeJS.Timer;
+    private timer: NodeJS.Timer | undefined;
 
     constructor(
         @inject('config') private config: IConfig,
@@ -66,6 +67,7 @@ export class QueueRepository implements Repository {
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
                 console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (completed)')
                 clearInterval(this.timer);
+                this.timer = undefined;
             }
         });
         this.queue.on('removed', async (job: Queue.Job) => {
@@ -77,6 +79,7 @@ export class QueueRepository implements Repository {
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
                 console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (removed)')
                 clearInterval(this.timer);
+                this.timer = undefined;
             }
         });
         this.queue.on('failed', async (job: Queue.Job) => {
@@ -88,6 +91,7 @@ export class QueueRepository implements Repository {
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
                 console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (failed)',)
                 clearInterval(this.timer);
+                this.timer = undefined;
             }
         });
 
@@ -161,9 +165,15 @@ export class QueueRepository implements Repository {
         const n = await this.nodeRepository.getNode(node.path);
         // console.log('node', n)
 
-        // Check if node is already part of an active job
+        if (this.config.get<string[]>('videoFormats').includes(getFileFormat(<string> node.name))) {
+            console.log('yay its a video')
+        } else {
+            console.log('oh no not video..')
+        }
+
+        // Check if node is already part of an active or upcoming job
         if (await this.isNodeScheduled(node.path)) {
-            throw new Error('This video is already part of an active conversion.')
+            throw new Error('This video is already part of an active or upcoming conversion.')
         }
 
         await this.queue.add(node);

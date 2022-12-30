@@ -55,13 +55,18 @@ export class VideoService {
             const nodeCheck = await this.nodeRepository.getFileNode(this.getConvertPath(<string>node.name));
             if (nodeCheck?.streams && nodeCheck?.streams?.length > 0) {
                 try {
-                    console.log('moving file bro');
+                    console.log('copy start');
                     // Copy converted asset
-                    await fs.copyFileSync(this.getConvertPath(<string>node.name), swapFormat(node.path, 'mp4'));
+                    await fs.promises.copyFile(this.getConvertPath(<string>node.name), swapFormat(node.path, 'mp4'));
+                    console.log('copy finished');
                     // Delete converted asset in conversion folder
-                    await fs.rmSync(this.getConvertPath(<string>node.name));
+                    console.log('remove tmp file');
+                    await fs.promises.rm(this.getConvertPath(<string>node.name));
+                    console.log('remove tmp file finished');
                     // Delete old asset
-                    await fs.rmSync(node.path);
+                    console.log('delete legacy asset start');
+                    await fs.promises.rm(node.path);
+                    console.log('delete legacy asset finished');
                 } catch (err) {
                     console.log(err);
                     throw new Error('Could not move file.');

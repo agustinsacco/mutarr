@@ -35,6 +35,12 @@ const useStyles = createUseStyles({
 	jobIcon: {
 		fontSize: 28,
 		cursor: 'pointer'
+	},
+	lightBox: {
+		border: '1px dashed #D6D6D6',
+        borderRadius: 3,
+        padding: 5,
+        margin: 5
 	}
 });
 
@@ -105,6 +111,7 @@ const Home: NextPage = () => {
 	const handleNodeClick = async (node: FSNode) => {
 		const fileNode = (await request.post('/nodes/streams').send({ path: node.path }))?.body;
 		if (fileNode) {
+			console.log(fileNode);
 			setCurrentNode(fileNode);
 		} else {
 			setCurrentNode(node);
@@ -117,9 +124,6 @@ const Home: NextPage = () => {
 		socket.off('pong');
 	}
 
-	const sendPing = () => {
-		socket.emit('ping');
-	}
 	const handleNodeExpand = (path: string) => {
 		setNodeStates({
 			...nodeStates,
@@ -156,25 +160,25 @@ const Home: NextPage = () => {
 								<Box>
 									<Grid.Container direction="column">
 										<Grid.Container direction="row" justify="space-between">
-											<Text size={16}># {job.id}</Text>
+											<Text size={18}># {job.id}</Text>
 											<RxCrossCircled className={classes.closeIcon} onClick={() => removeJob(job.id.toString())} />
 										</Grid.Container>
 										<Grid.Container direction="column" css={{ marginTop: 5 }}>
-											<Text weight="bold" size={12}>{job.data?.path}</Text>
+											<Text weight="light" size={14}>{job.data?.path}</Text>
 											{job?.data?.progress &&
 												<Grid.Container direction="row" css={{ marginTop: 10 }}>
 													<Grid xs={6}>
-														<Grid.Container direction="column" alignContent="center">
-															<Text size={12}>fps: {readableBytes(job.data.progress.fps)}</Text>
-															<Text size={12}>bitrate: {job.data.progress.bitrate}</Text>
-															<Text size={12}>out time: {job.data.progress.out_time}</Text>
+														<Grid.Container direction="column" alignContent="flex-start" className={classes.lightBox}>
+															<Text size={14}>fps: {readableBytes(job.data.progress.fps)}</Text>
+															<Text size={14}>bitrate: {job.data.progress.bitrate}</Text>
+															<Text size={14}>out time: {job.data.progress.out_time}</Text>
 														</Grid.Container>
 													</Grid>
 													<Grid xs={6}>
-														<Grid.Container direction="column" alignContent="center">
-															<Text size={12}>size: {readableBytes(job.data.progress.total_size)}</Text>
-															<Text size={12}>speed: {job.data.progress.speed}</Text>
-															<Text size={12}>drop frame: {job.data.progress.drop_frames}</Text>
+														<Grid.Container direction="column" alignContent="flex-start" className={classes.lightBox}>
+															<Text size={14}>size: {readableBytes(job.data.progress.total_size)}</Text>
+															<Text size={14}>speed: {job.data.progress.speed}</Text>
+															<Text size={14}>drop frame: {job.data.progress.drop_frames}</Text>
 														</Grid.Container>
 													</Grid>
 												</Grid.Container>
@@ -243,7 +247,7 @@ const Home: NextPage = () => {
 								<ActiveNode
 									onConvert={addJob}
 									node={currentNode}
-									jobs={jobs?.active} />
+									jobs={[].concat(jobs?.active, jobs?.waiting)} />
 							</Grid>
 						}
 						<Grid xs={12}>

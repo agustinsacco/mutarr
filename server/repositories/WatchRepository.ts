@@ -15,18 +15,20 @@ export class WatchRepository implements Repository {
     private event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
     constructor(
         @inject('config') private config: IConfig,
+        @inject('logger') private logger: Logger,
         @inject('Service') @named('Socket') private socketService: SocketService,
         @inject('Repository') @named('Node') private nodeRepository: NodeRepository,
     ) { }
 
     public async initialize(): Promise<void> {
-        chokidar.watch(this.config.get<string>('watchPath'), {
+        const path = this.config.get<string>('watchPath');
+        chokidar.watch(path, {
             ignoreInitial: true,
             usePolling: true
         }).on('ready', () => {
-            console.log('info', 'Watching folders for changes');
-        }).on('all', async (event, path) => {
-            // console.log(event, path);
+            this.logger.log('info', `Watching "${path}" for changes`);
+        }).on('all', async () => {
+            this.logger.log('info', `Change event within "${path}", refreshing nodes`);
             const nodes = await this.nodeRepository.refreshNodes();
             this.socketService.nodesRefresh(nodes);
         });

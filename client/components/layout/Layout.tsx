@@ -45,7 +45,7 @@ export const Layout = (props: Props) => {
         <div className={classes.root}>
             <Grid.Container direction="row" justify="space-between" alignItems="center">
                 <div className={classes.logo}>
-                    PROTEUS
+                    MUTARR
                 </div>
                 <div className={classes.menu}>
                     <IoStatsChartOutline className={classNames(classes.icon)} />

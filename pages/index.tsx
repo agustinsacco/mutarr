@@ -38,9 +38,9 @@ const useStyles = createUseStyles({
 	},
 	lightBox: {
 		border: '1px dashed #D6D6D6',
-        borderRadius: 3,
-        padding: 5,
-        margin: 5
+		borderRadius: 3,
+		padding: 5,
+		margin: 5
 	}
 });
 
@@ -61,12 +61,6 @@ const Home: NextPage = () => {
 	const [lastPong, setLastPong] = useState('');
 	const [nodeStates, setNodeStates] = useState<{ [key: string]: boolean }>({});
 
-	useEffect(() => {
-		onMount();
-		return () => {
-			unMount();
-		};
-	}, []);
 
 	const onMount = async (): Promise<void> => {
 		socket.on('connect', () => {
@@ -94,6 +88,13 @@ const Home: NextPage = () => {
 		getStatus();
 	}
 
+	useEffect(() => {
+		onMount();
+		return () => {
+			unMount();
+		};
+	}, []);
+
 	const getJobs = async () => {
 		const jobsRsp = (await request.get('/queue/jobs'))?.body;
 		if (jobsRsp) {
@@ -111,7 +112,6 @@ const Home: NextPage = () => {
 	const handleNodeClick = async (node: FSNode) => {
 		const fileNode = (await request.post('/nodes/streams').send({ path: node.path }))?.body;
 		if (fileNode) {
-			console.log(fileNode);
 			setCurrentNode(fileNode);
 		} else {
 			setCurrentNode(node);

@@ -49,7 +49,7 @@ export class QueueRepository implements Repository {
 
             // Start progress interval if its not already on
             if (!this.timer) {
-                console.log('>>>>>>>>>>>>>>>>>>> starting timer to send progress!!!')
+                this.logger.log('debug', 'Starting timer');
                 this.timer = setInterval(async () => {
                     // Update all jobs to reduce change of race conditions
                     this.socketService.jobsRefresh(await this.getJobs());
@@ -61,11 +61,10 @@ export class QueueRepository implements Repository {
             this.socketService.jobsRefresh(await this.getJobs());
             this.socketService.nodesRefresh(await this.nodeRepository.refreshNodes());
 
-
             // If timer has an existing interval 
             // and we no longer have active jobs, stop progress
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
-                console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (completed)')
+                this.logger.log('debug', 'Stopping timer');
                 clearInterval(this.timer);
                 this.timer = undefined;
             }
@@ -77,7 +76,7 @@ export class QueueRepository implements Repository {
             // If timer has an existing interval 
             // and we no longer have active jobs, stop progress
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
-                console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (removed)')
+                this.logger.log('debug', 'Stopping timer');
                 clearInterval(this.timer);
                 this.timer = undefined;
             }
@@ -89,7 +88,7 @@ export class QueueRepository implements Repository {
             // If timer has an existing interval 
             // and we no longer have active jobs, stop progress
             if (this.timer !== undefined && (await this.queue.getActive()).length === 0) {
-                console.log('>>>>>>>>>>>>>>>>>>> STOPPING timer progress!!! (failed)',)
+                this.logger.log('debug', 'Stopping timer');
                 clearInterval(this.timer);
                 this.timer = undefined;
             }
@@ -102,7 +101,14 @@ export class QueueRepository implements Repository {
         return new Promise(async (resolve, reject) => {
             // Start Event listener in case we need to terminal the job
             // Delete converted asset in conversion folder
-            await this.videoService.preConversion(node);
+            try {
+                this.logger.log('info', `Preconversion for ${job.id}`);
+                await this.videoService.preConversion(node);
+            } catch (err) {
+                return reject(err);
+            }
+
+            this.logger.log('info', `Conversion for ${job.id}`);
             const process = this.videoService.convert(
                 node,
                 // onUpdate
@@ -117,20 +123,27 @@ export class QueueRepository implements Repository {
                     this.logger.log('info', `Completed ${job.id} with code: ${code}`);
                     // Completed successfully
                     if (code == 0) {
-                        // Lets move the file over and delete the old
-                        await this.videoService.postConversion(node);
-                        return resolve();
+                        // Run post conversion
+                        try {
+                            this.logger.log('info', `Post conversion for ${job.id}`);
+                            await this.videoService.postConversion(node);
+                            return resolve();
+                        } catch (err) {
+                            return reject(err);
+                        }
                     }
+                    this.logger.log('info', `Completed ${job.id} with code: ${code}`);
+
                     // Graceful shut down of process otherwise.
                     // For now do nothing. FFMPEG has already terminated gracefully.
-                    return resolve();
+                    return reject('FFMPEG returned and error code during conversion');
                 },
             );
             //
             this.jobEmitter.on('kill', async (id: string) => {
-                console.log(`Processing job conversion: ${job.id} and received kill event for ${id}`);
+                this.logger.log('debug', `Processing job conversion: ${job.id} and received kill event for ${id}`);
                 if (job.id === id) {
-                    console.log('Killing process!')
+                    this.logger.log('debug', 'Killing process!')
                     // Lets first kill the process and then move job to failed
                     await process.kill('SIGINT');
                     // Now kill the job
@@ -160,40 +173,36 @@ export class QueueRepository implements Repository {
     }
 
     public async addJob(node: FSNode): Promise<void> {
-        console.log('addJob');
-        // Check if video is already in target codec
-        const n = await this.nodeRepository.getNode(node.path);
-        // console.log('node', n)
-
-        if (this.config.get<string[]>('videoFormats').includes(getFileFormat(<string> node.name))) {
-            console.log('yay its a video')
+        if (this.config.get<string[]>('videoFormats').includes(getFileFormat(<string>node.name))) {
         } else {
-            console.log('oh no not video..')
+            this.logger.log('error', 'This file is not a video.'));
+            throw new Error('This file is not a video.');
         }
 
         // Check if node is already part of an active or upcoming job
         if (await this.isNodeScheduled(node.path)) {
-            throw new Error('This video is already part of an active or upcoming conversion.')
+            this.logger.log('error', 'This video is already part of an active or upcoming conversion.');
+            throw new Error('This video is already part of an active or upcoming conversion.');
         }
 
         await this.queue.add(node);
     }
 
     public async removeJob(id: string): Promise<void> {
-        console.log('removeJob', id);
         try {
             const job = await this.queue.getJob(id);
 
             // Lets check if the job is currently active
             if (await this.isActiveJob(id)) {
-                console.log('emitting event because we need to kill active job')
+                this.logger.log('debug', `Emitting event to kill active job ${id}`)
                 this.jobEmitter.emit('kill', id);
                 return;
             }
             await job?.remove();
             return;
-        } catch (err) {
-            console.log('error deleting job bro!', err)
+        } catch (err: any) {
+            this.logger.log('error', `Error deleting job ${id} | ${err?.message}`);
+            throw new Error('This video is already part of an active or upcoming conversion.');
         }
 
     }
@@ -233,7 +242,6 @@ export class QueueRepository implements Repository {
         const activeJobs = await this.queue.getActive();
         jobs.push(<any>waitingJobs);
         jobs.push(<any>activeJobs);
-        console.log(path)
         if (jobs.find((j: Job) => j.data?.path == path)) {
             return true;
         }

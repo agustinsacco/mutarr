@@ -5,20 +5,16 @@ services:
   mutarr:
     build:
         context: .
-        target: develop
+        target: release
     container_name: mutarr
-    environment:
-      - NODE_ENV=development
-    env_file:
-        - ./.env
     volumes:
       - /mutarr/lib/node_modules
-      - ./:/mutarr/lib
+      # - ./:/mutarr/lib
       - ./tmp:/mutarr/tmp
       - ~/Videos:/mutarr/watch/videos
       # - tnas-shows:/mutarr/watch/shows
       # - tnas-movies:/mutarr/watch/movies
-    command: npm run dev
+    # command: npm run dev
     ports:
       - 3000:3000
       - 3001:3001

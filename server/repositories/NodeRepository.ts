@@ -5,11 +5,9 @@ import { Repository } from './Repository';
 import { promises } from 'fs';
 import { FSNodeModel } from '../models/FSNodeModel';
 import ffprobe from 'ffprobe';
-import { FFProbeResult } from 'ffprobe';
 import ffprobeStatic from 'ffprobe-static';
 import path from 'path';
 import { FSNode, FSNodeType } from '../entities/FSNode';
-import mockNodes from '../../fsNodes.json';
 import { getFileFormat } from '../utilities/File';
 
 
@@ -28,15 +26,8 @@ export class NodeRepository implements Repository {
     public async initialize(): Promise<void> {
     }
 
-
-    public async getCachedNodes(): Promise<FSNode[]> {
-        // fs.writeFileSync('fsNodes.json', JSON.stringify(fsNodes), 'utf-8')
-        return <any>mockNodes;
-    }
-
     public async getNodes(): Promise<FSNode[]> {
         if (this.nodes) {
-            console.log('returning memory cached nodes!');
             return this.nodes;
         }
         this.nodes = await this.parseNodes(this.path);
@@ -52,7 +43,6 @@ export class NodeRepository implements Repository {
             size: stat.size
         }
         if (format && this.config.get<string>('videoFormats').includes(format)) {
-            console.log('getting ffprobe')
             try {
                 const streams = (await ffprobe(path, { path: ffprobeStatic.path }))?.streams;
                 if (streams) {
@@ -63,7 +53,7 @@ export class NodeRepository implements Repository {
         
                 }
             } catch (err) {
-                console.log('got an error getting streams for file node', err);
+                this.logger.log('error', 'Error getting streams for file node');
             }
         }
         return await this.fsNodeModel.create(rawNode);

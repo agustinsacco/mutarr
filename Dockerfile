@@ -1,7 +1,7 @@
 FROM node:18-slim as base
 WORKDIR /mutarr/lib
 COPY package.json /mutarr/lib/
-RUN apt-get update && apt-get -y install lsb-release redis redis-tools ffmpeg python g++ make && rm -rf /var/cache/apt/*
+RUN apt-get update && apt-get -y install redis redis-tools ffmpeg && rm -rf /var/cache/apt/*
 
 FROM base as dependencies
 COPY package-lock.json /mutarr/lib/
@@ -23,4 +23,4 @@ COPY --from=develop /mutarr/lib/build /mutarr/lib/build
 COPY --from=develop /mutarr/lib/config /mutarr/lib/config
 COPY --from=develop /mutarr/lib/public /mutarr/lib/public
 
-CMD "./boot.sh"
+CMD ["npm", "start"]

@@ -57,7 +57,7 @@ export class App {
                 // Init repositories
                 // await this.initRepositories();
                 app.listen(port, host, () => {
-                    console.log(`Main server started http://${host}:${port}`);
+                    this.logger.log('info', `Main server started http://${host}:${port}`);
                     resolve();
                 });
             });
@@ -78,7 +78,7 @@ export class App {
             const host = this.config.get<string>('server.host');
 
             httpServer.listen(port, () => {
-                console.log(`Socket server started http://${host}:${port}`);
+                this.logger.log('info', `Socket server started http://${host}:${port}`);
                 resolve(socket);
             });
         });

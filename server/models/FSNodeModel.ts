@@ -1,11 +1,6 @@
-import ffprobe from 'ffprobe';
-import { FFProbeResult } from 'ffprobe';
-import ffprobeStatic from 'ffprobe-static';
 import { injectable } from 'inversify';
-import { FSNode, FSNodeType } from '../entities/FSNode';
-import { getFileFormat, getFileName } from '../utilities/File';
-
-const videoFormats: string[] = ['mp4', 'avi', 'mkv', 'mov'];
+import { FSNode } from '../entities/FSNode';
+import {  getFileFormat, getFileName } from '../utilities/File';
 
 @injectable()
 export class FSNodeModel {
@@ -18,20 +13,17 @@ export class FSNodeModel {
         ;
         fsNode.type = attr.type;
         fsNode.path = attr.path;
+        fsNode.size = attr.size;
         fsNode.name = getFileName(attr.path);
-        if (attr.type === FSNodeType.FILE) {
-            fsNode.format = getFileFormat(<string> fsNode.name);
-            if (fsNode.format && videoFormats.includes(fsNode.format)) {
-                fsNode.streams = (await this.getVideoProbe(attr.path)).streams
-            }
+        fsNode.format = getFileFormat(fsNode.name);
+
+        if (attr?.streams) {
+            fsNode.streams = attr.streams;
         }
         if (attr?.children && attr.children.length > 0) {
             fsNode.children = attr.children;
         }
-        return fsNode
+        return fsNode;
     }
 
-    private async getVideoProbe(path: string): Promise<FFProbeResult> {
-        return await ffprobe(path, { path: ffprobeStatic.path });
-    }
 }

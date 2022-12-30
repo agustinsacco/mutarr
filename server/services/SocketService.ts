@@ -2,8 +2,9 @@ import { inject, injectable } from 'inversify';
 import { IConfig } from 'config';
 import { Logger } from '../utilities/Logger';
 import { Server } from 'socket.io';
-import Queue from 'bull';
-import { Socket } from 'socket.io-client';
+import { Job } from 'bull';
+import { JobCollection } from '../entities/JobCollection';
+import { FSNode } from '../entities/FSNode';
 
 @injectable()
 export class SocketService {
@@ -24,27 +25,12 @@ export class SocketService {
     //     });
     // }
 
-    public seed(seed: { [key: string]: string[] }): void {
-        this.server.emit('seed', seed);
+    public nodesRefresh(nodes: FSNode[]): void {
+        this.server.emit('nodesRefresh', nodes);
     }
 
-    public jobEvent(job: Queue.Job): void {
-        console.log('sent jobEvent!')
-        this.server.emit('job', job);
+    public jobsRefresh(jobs: JobCollection): void {
+        this.server.emit('jobsRefresh', jobs);
     }
-}
 
-enum VideoJobStatus {
-    CONVERTING = 'CONVERTING',
-    COMPLETE = 'COMPLETE',
-    FAILURE = 'FAILURE',
-}
-
-interface VideoJobEvent {
-    id: number;
-    status: VideoJobStatus;
-    data?: {
-        [key: string]: string
-    },
-    message?: string
 }

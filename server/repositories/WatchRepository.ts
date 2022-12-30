@@ -5,52 +5,30 @@ import { Logger } from '../utilities/Logger';
 import ffmpeg from 'ffmpeg';
 import { SocketService } from '../services/SocketService';
 import { Repository } from './Repository';
+import { NodeRepository } from './NodeRepository';
 
 export type File = string
 
 
 @injectable()
 export class WatchRepository implements Repository {
-    private watched: any
+    private event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
     constructor(
         @inject('config') private config: IConfig,
-        @inject('logger') private logger: Logger,
         @inject('Service') @named('Socket') private socketService: SocketService,
+        @inject('Repository') @named('Node') private nodeRepository: NodeRepository,
     ) { }
 
     public async initialize(): Promise<void> {
-        const watcher = chokidar.watch(this.config.get<string>('watchPath'), {
+        chokidar.watch(this.config.get<string>('watchPath'), {
+            ignoreInitial: true,
             usePolling: true
         }).on('ready', () => {
-            // console.log('Watcher service started. Watching:', watcher.getWatched());
-            // this.socketService.seed(watcher.getWatched());
-        }).on("all", async (event, path) => {
+            console.log('info', 'Watching folders for changes');
+        }).on('all', async (event, path) => {
             // console.log(event, path);
-            if (event === 'add') {
-                // console.log(path)
-                // Lets check the video codec
-                // const codec = 
-                // const metadata = await this.convertVideo(path);
-                // console.log(metadata);
-            }
+            const nodes = await this.nodeRepository.refreshNodes();
+            this.socketService.nodesRefresh(nodes);
         });
-    }
-
-    private convertVideo(path: string): Promise<any> {
-        return new Promise((resolve, reject) => {
-            try {
-                const process = new ffmpeg(path);
-                process.then((video: any) => {
-                    console.log(path, video.metadata);
-                    resolve(video.metadata);
-                }, (err: any) => {
-                    reject(err);
-                    console.log('Error: ' + err);
-                });
-            } catch (err: any) {
-                reject(err);
-            }
-        })
-
     }
 }

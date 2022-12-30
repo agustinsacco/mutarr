@@ -12,6 +12,7 @@ import { IConfig } from 'config';
 // declare metadata by @controller annotation
 import { RenderController } from './controllers/RenderController';
 import { HealthController } from './controllers/HealthController';
+import { QueueController } from './controllers/QueueController';
 import { Logger } from './utilities/Logger';
 import { WatchRepository } from './repositories/WatchRepository';
 import { SocketService } from './services/SocketService';
@@ -20,7 +21,6 @@ import { NodeController } from './controllers/NodeController';
 import { FSNodeModel } from './models/FSNodeModel';
 import { QueueRepository } from './repositories/QueueRepository';
 import { VideoService } from './services/VideoService';
-import { JobController } from './controllers/JobController';
 
 // Create global Registry
 const container = new Container();
@@ -28,7 +28,7 @@ const container = new Container();
 // Controllers (in order_)
 container.bind<interfaces.Controller>(TYPE.Controller).to(HealthController).whenTargetNamed('HealthController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(NodeController).whenTargetNamed('NodeController');
-container.bind<interfaces.Controller>(TYPE.Controller).to(JobController).whenTargetNamed('JobController');
+container.bind<interfaces.Controller>(TYPE.Controller).to(QueueController).whenTargetNamed('QueueController');
 container.bind<interfaces.Controller>(TYPE.Controller).to(RenderController).whenTargetNamed('RenderController');
 
 // Services
@@ -39,7 +39,7 @@ container.bind<VideoService>('Service').to(VideoService).inSingletonScope().when
 container.bind<FSNodeModel>('Model').to(FSNodeModel).inSingletonScope().whenTargetNamed('FSNode');
 
 // Repositories
-container.bind<NodeRepository>('Repository').to(NodeRepository).inSingletonScope().whenTargetNamed('File');
+container.bind<NodeRepository>('Repository').to(NodeRepository).inSingletonScope().whenTargetNamed('Node');
 container.bind<WatchRepository>('Repository').to(WatchRepository).inSingletonScope().whenTargetNamed('Watch');
 container.bind<QueueRepository>('Repository').to(QueueRepository).inSingletonScope().whenTargetNamed('Queue');
 

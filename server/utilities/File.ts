@@ -1,6 +1,9 @@
 
 
 export const swapFormat = (fileName: string, format: string): string => {
+    if (!fileName) {
+        throw new Error('No filename provided');
+    }
     const currentFormat = getFileFormat(fileName);
     return fileName.replace(`.${currentFormat}`, `.${format}`)
 }

@@ -4,14 +4,18 @@ import { Logger } from '../utilities/Logger';
 import { Repository } from './Repository';
 import { promises } from 'fs';
 import { FSNodeModel } from '../models/FSNodeModel';
-import fs from 'fs';
+import ffprobe from 'ffprobe';
+import { FFProbeResult } from 'ffprobe';
+import ffprobeStatic from 'ffprobe-static';
 import path from 'path';
 import { FSNode, FSNodeType } from '../entities/FSNode';
 import mockNodes from '../../fsNodes.json';
+import { getFileFormat } from '../utilities/File';
+
 
 @injectable()
 export class NodeRepository implements Repository {
-    private fsNodes: FSNode[];
+    private nodes: FSNode[];
     private path: string;
     constructor(
         @inject('config') private config: IConfig,
@@ -21,20 +25,60 @@ export class NodeRepository implements Repository {
         this.path = this.config.get<string>('watchPath');
     }
 
-    public async initialize(): Promise<void> { }
+    public async initialize(): Promise<void> {
+    }
 
 
     public async getCachedNodes(): Promise<FSNode[]> {
         // fs.writeFileSync('fsNodes.json', JSON.stringify(fsNodes), 'utf-8')
-        return <any> mockNodes;
+        return <any>mockNodes;
     }
 
     public async getNodes(): Promise<FSNode[]> {
-        const path = this.config.get<string>('watchPath');
-        const fsNodes = await this.parseNodes(path);
-        fs.writeFileSync('fsNodes.json', JSON.stringify(fsNodes), 'utf-8')
+        if (this.nodes) {
+            console.log('returning memory cached nodes!');
+            return this.nodes;
+        }
+        this.nodes = await this.parseNodes(this.path);
+        return this.nodes;
+    }
 
-        return fsNodes;
+    public async getFileNode(path: string): Promise<FSNode> {
+        const format = getFileFormat(<string>path);
+        const stat = await promises.stat(path);
+        let rawNode: FSNode = {
+            path: path,
+            type: FSNodeType.FILE,
+            size: stat.size
+        }
+        if (format && this.config.get<string>('videoFormats').includes(format)) {
+            console.log('getting ffprobe')
+            try {
+                const streams = (await ffprobe(path, { path: ffprobeStatic.path }))?.streams;
+                if (streams) {
+                    rawNode = {
+                        ...rawNode,
+                        streams: streams
+                    }
+        
+                }
+            } catch (err) {
+                console.log('got an error getting streams for file node', err);
+            }
+        }
+        return await this.fsNodeModel.create(rawNode);
+    }
+
+    public async getNode(path: string): Promise<FSNode> {
+        return await this.fsNodeModel.create({
+            path: path,
+            type: FSNodeType.FILE,
+        });
+    }
+
+    public async refreshNodes(): Promise<FSNode[]> {
+        this.nodes = await this.parseNodes(this.path);
+        return this.nodes;
     }
 
     private async parseNodes(dir: string): Promise<FSNode[]> {
@@ -54,6 +98,7 @@ export class NodeRepository implements Repository {
             } else if (stat.isFile()) {
                 const node = await this.fsNodeModel.create({
                     path: entryDir,
+                    size: stat.size,
                     type: FSNodeType.FILE,
                 });
                 fsNodes.push(node);

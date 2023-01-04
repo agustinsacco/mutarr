@@ -1,6 +1,6 @@
 
 import { Grid } from '@nextui-org/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { VscSettingsGear } from 'react-icons/vsc';
 import { IoStatsChartOutline } from 'react-icons/io5';
@@ -41,6 +41,7 @@ type Props = {
 
 export const Layout = (props: Props) => {
     const classes = useStyles();
+    const [settingsOpen, setSettingsOpen] = useState(false);
     return (
         <div className={classes.root}>
             <Grid.Container direction="row" justify="space-between" alignItems="center">

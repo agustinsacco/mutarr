@@ -14,17 +14,13 @@ import { NodeTree } from '../client/components/NodeTree';
 import { ActiveNode } from '../client/components/ActiveNode';
 import { AiOutlinePlayCircle, AiOutlinePauseCircle } from 'react-icons/ai'
 import { MdDeleteSweep } from 'react-icons/md'
+import { SettingsModal } from '../client/components/SettingsModal';
 
 const socket = io('http://0.0.0.0:3001');
 
 const useStyles = createUseStyles({
-	root: {
-		// maxWidth: 1200,
-		// width: '100%',
-		// margin: '0 auto'
-	},
 	card: {
-		border: '1px solid #D6D6D6',
+		// border: '1px solid #D6D6D6',
 		borderRadius: 3,
 		padding: 10
 	},
@@ -46,8 +42,8 @@ const useStyles = createUseStyles({
 
 const Home: NextPage = () => {
 	const classes = useStyles();
-	const [isConnected, setIsConnected] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
+	const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 	const [nodes, setNodes] = useState();
 	const [nodesLoading, setNodesLoading] = useState(false);
 	const [jobs, setJobs] = useState<any>({
@@ -63,12 +59,6 @@ const Home: NextPage = () => {
 
 
 	const onMount = async (): Promise<void> => {
-		socket.on('connect', () => {
-			setIsConnected(true);
-		});
-		socket.on('disconnect', () => {
-			setIsConnected(false);
-		});
 		socket.on('pong', () => {
 			setLastPong(new Date().toISOString());
 		});
@@ -169,7 +159,7 @@ const Home: NextPage = () => {
 												<Grid.Container direction="row" css={{ marginTop: 10 }}>
 													<Grid xs={6}>
 														<Grid.Container direction="column" alignContent="flex-start" className={classes.lightBox}>
-															<Text size={14}>fps: {readableBytes(job.data.progress.fps)}</Text>
+															<Text size={14}>fps: {job.data.progress.fps}</Text>
 															<Text size={14}>bitrate: {job.data.progress.bitrate}</Text>
 															<Text size={14}>out time: {job.data.progress.out_time}</Text>
 														</Grid.Container>
@@ -198,19 +188,16 @@ const Home: NextPage = () => {
 	}
 
 	return (
-		<div className={classes.root}>
-			<Grid.Container gap={1} justify="center">
+		<div>
+			<Grid.Container gap={2} justify="center">
 				<Grid xs={4}>
 					<Grid.Container direction="row" alignContent="flex-start">
 						<Grid xs={12} css={{ marginBottom: 20 }}>
-							<Card className={classes.card}>
-
-								<Grid.Container gap={1} direction="row" justify="flex-end" alignItems="center">
+								<Grid.Container gap={1} direction="row" justify="flex-start" alignItems="center">
 									<Grid><AiOutlinePlayCircle className={classes.jobIcon} onClick={() => resumeQueue()} /></Grid>
 									<Grid><AiOutlinePauseCircle className={classes.jobIcon} onClick={() => pauseQueue()} /></Grid>
 									<Grid><MdDeleteSweep className={classes.jobIcon} onClick={() => resumeQueue()} /></Grid>
 								</Grid.Container>
-							</Card>
 						</Grid>
 						<Grid xs={12} css={{ marginBottom: 10 }}>
 							<Card className={classes.card}>
@@ -241,6 +228,7 @@ const Home: NextPage = () => {
 				</Grid>
 
 				<Grid xs={8}>
+					
 					<Grid.Container direction="row" alignContent="flex-start">
 						{currentNode &&
 							<Grid xs={12} css={{ marginBottom: 20 }}>
@@ -268,6 +256,7 @@ const Home: NextPage = () => {
 				</Grid>
 
 			</Grid.Container>
+			<SettingsModal open={settingsModalOpen} onClose={() => setSettingsModalOpen(false)}/>
 		</div>
 
 	)

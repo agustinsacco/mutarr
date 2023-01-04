@@ -4,7 +4,7 @@ module.exports = {
         name: process.env.APP_NAME || 'gumbopdf',
     },
     watchPath: '/mutarr/watch',
-    convertPath: '/mutarr/tmp',
+    convertPath: '/tmp',
     queueConfig: {
         concurrency: 2
     },

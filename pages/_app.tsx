@@ -3,12 +3,7 @@ import { NextUIProvider, createTheme } from '@nextui-org/react';
 import { Layout } from '../client/components/layout/Layout';
 
 const theme = createTheme({
-	type: 'light',
-	theme: {
-		fonts: {
-			code: 'Source Code Pro'
-		}
-	}
+	type: 'dark',
 });
 
 function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {

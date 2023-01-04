@@ -22,5 +22,6 @@ COPY --from=develop /mutarr/lib/next.config.js /mutarr/lib/next.config.js
 COPY --from=develop /mutarr/lib/build /mutarr/lib/build
 COPY --from=develop /mutarr/lib/config /mutarr/lib/config
 COPY --from=develop /mutarr/lib/public /mutarr/lib/public
+USER node
 
 CMD ["npm", "start"]

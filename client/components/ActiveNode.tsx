@@ -8,13 +8,10 @@ import { readableBytes } from '../../server/utilities/Bytes';
 
 const useStyles = createUseStyles({
     card: {
-        border: '1px solid #D6D6D6',
         borderRadius: 3,
         padding: 10
     },
     streams: {
-        border: '1px dashed #D6D6D6',
-        borderRadius: 3,
         padding: 5,
         margin: 5
     }

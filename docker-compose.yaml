@@ -3,18 +3,17 @@ version: "3.4"
 services:
 
   mutarr:
+    # image: saccodigital/mutarr:main
     build:
         context: .
-        target: release
+        target: develop
     container_name: mutarr
     volumes:
-      - /mutarr/lib/node_modules
-      # - ./:/mutarr/lib
-      - ./tmp:/mutarr/tmp
+      - ./:/mutarr/lib
       - ~/Videos:/mutarr/watch/videos
       # - tnas-shows:/mutarr/watch/shows
       # - tnas-movies:/mutarr/watch/movies
-    # command: npm run dev
+    command: npm run dev
     ports:
       - 3000:3000
       - 3001:3001

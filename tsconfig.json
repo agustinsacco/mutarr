@@ -19,7 +19,7 @@
     "incremental": true,
     "experimentalDecorators": true,
     "allowJs": true,
-    "strictPropertyInitialization": false,
+    "strictPropertyInitialization": false
   },
   "include": [
     "next-env.d.ts",

@@ -15,8 +15,10 @@ import { ActiveNode } from '../client/components/ActiveNode';
 import { AiOutlinePlayCircle, AiOutlinePauseCircle } from 'react-icons/ai'
 import { MdDeleteSweep } from 'react-icons/md'
 import { SettingsModal } from '../client/components/SettingsModal';
+import getConfig from 'next/config';
+const { publicRuntimeConfig } = getConfig()
 
-const socket = io('http://0.0.0.0:3001');
+const socket = io(publicRuntimeConfig.CLIENT_HOST);
 
 const useStyles = createUseStyles({
 	card: {
@@ -59,6 +61,9 @@ const Home: NextPage = () => {
 
 
 	const onMount = async (): Promise<void> => {
+		socket.on('connect', () => {
+			console.log('Socket is connected!')
+		});
 		socket.on('pong', () => {
 			setLastPong(new Date().toISOString());
 		});

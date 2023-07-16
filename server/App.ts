@@ -11,7 +11,7 @@ import { Logger } from './utilities/Logger';
 import { Server as SocketServer } from 'socket.io';
 import { createServer, Server as HttpServer } from 'http';
 import { SocketService } from './services/SocketService';
-import { QueueService } from './services/QueueService';
+import { AbstractWorker } from './workers/AbstractWorker';
 
 export class App {
     private config: IConfig;
@@ -27,8 +27,8 @@ export class App {
     public async start(): Promise<void> {
         // Initialize repositories
         await this.initializeRepositories();
-        // Initialize queue service
-        container.getNamed<QueueService>('Service', 'Queue').initialize();
+        await this.initializeWorkers();
+
         // Start Next server
         const startResult = await this.startServer();
         // Set socket in service
@@ -80,5 +80,15 @@ export class App {
         for (const r of repositories) {
             await r.initialize();
         }
+    }
+
+    private async initializeWorkers(): Promise<void> {
+    // Start workers
+    const workers = await container.getAll<AbstractWorker<unknown, unknown>>(
+        "Worker"
+      );
+      for (const worker of workers) {
+        await worker.start();
+      }
     }
 }

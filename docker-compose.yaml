@@ -1,7 +1,6 @@
 version: "3.4"
 
 services:
-
   mutarr:
     # image: saccodigital/mutarr:main
     build:
@@ -13,7 +12,8 @@ services:
       - APP_NAME=mutarr
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=3000
-      - CLIENT_HOST=http://localhost:3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CONVERSION_CODEC=h265
       - CONVERSION_CONCURRENCY=1
     volumes:
@@ -26,8 +26,14 @@ services:
     ports:
       - 3000:3000
 
-volumes:
+  redis:
+    image: redis:7.0
+    container_name: redis
+    ports:
+      - 6378:6379
+    restart: always
 
+volumes:
   tnas-shows:
     driver_opts:
       type: nfs

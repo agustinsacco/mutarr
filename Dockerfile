@@ -1,7 +1,7 @@
 FROM node:18-slim as base
 WORKDIR /mutarr/lib
 COPY package.json /mutarr/lib/
-RUN apt-get update && apt-get -y install redis redis-tools ffmpeg && rm -rf /var/cache/apt/*
+RUN apt-get update && apt-get -y install ffmpeg && rm -rf /var/cache/apt/*
 
 FROM base as dependencies
 COPY package-lock.json /mutarr/lib/

@@ -1,0 +1,52 @@
+import { injectable, inject, named } from "inversify";
+import { AbstractWorker } from "./AbstractWorker";
+import { Job, Queue } from "bullmq";
+import { Redis } from "ioredis";
+import { container } from "../Registry";
+import { AbstractProcessor } from "../processors/AbstractProcessor";
+
+@injectable()
+export class SeedWorker extends AbstractWorker<any, any> {
+  public constructor(
+    @inject("Repository") @named("TranscodeQueue") queue: Queue,
+    @inject("Redis") connection: Redis
+  ) {
+    super(queue, connection);
+  }
+
+  // Fix type and generics here
+  public async run(job: Job): Promise<any> {
+    console.log(`starting job: ${job.id}`);
+    console.log("job data", job.data);
+    // Lets look for the processor
+    let processor;
+    try {
+      processor = container.getNamed<AbstractProcessor>(
+        "Processor",
+        "Transcode"
+      );
+    } catch (err) {
+      throw new Error(`Processor not found`);
+    }
+
+    // Start processing and listening for abort
+    try {
+      /**
+       * Promise race ensures that a promise will be resolved from either "abort"
+       * or "process". Since "abort" can only reject we assume process will eventually
+       * resolve.
+       */
+      const rsp = <any>(
+        await Promise.race([processor.abort(job), processor.process(job)])
+      );
+      return rsp;
+    } catch (err) {
+      await job.remove();
+      throw new Error(
+        `Processor has failed with error: ${
+          (<Error>err).message
+        }`
+      );
+    }
+  }
+}

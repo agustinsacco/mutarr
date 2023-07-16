@@ -1,103 +1,123 @@
-import { inject, injectable, named } from 'inversify';
-import { controller, httpDelete, httpGet, httpPost } from 'inversify-koa-utils';
-import { IConfig } from 'config';
-import Router from 'koa-router';
-import { QueueRepository } from '../repositories/QueueRepository';
-import { Logger } from '../utilities/Logger';
-import Queue from 'bull';
-import { JobCollection } from '../entities/JobCollection';
-import { QueueService } from '../services/QueueService';
+import { inject, injectable, named } from "inversify";
+import { controller, httpDelete, httpGet, httpPost } from "inversify-koa-utils";
+import { IConfig } from "config";
+import Router from "koa-router";
+import { TranscodeQueueRepository } from "../repositories/TranscodeQueueRepository";
+import { Logger } from "../utilities/Logger";
+import { JobCollection } from "../entities/JobCollection";
+import { TranscodeProcessor } from "../processors/TranscodeProcessor";
 
-@controller('/queue')
+@controller("/queue")
 @injectable()
 export class QueueController {
-    constructor(
-        @inject('config') private config: IConfig,
-        @inject('logger') private logger: Logger,
-        @inject('Repository') @named('Queue') private queueRepo: QueueRepository,
-        @inject('Service') @named('Queue') private queueService: QueueService,
+  constructor(
+    @inject("config") private config: IConfig,
+    @inject("logger") private logger: Logger,
+    @inject("Repository")
+    @named("TranscodeQueue")
+    private transcodeQueue: TranscodeQueueRepository,
+    @inject("Service") @named("Queue") private processor: TranscodeProcessor
+  ) {}
 
-    ) { }
-
-    @httpGet('/jobs')
-    public async getJobs(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<JobCollection> {
-        try {
-            const jobs = await this.queueRepo.getJobs();
-            return jobs;
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot get jobs');
-            ctx.throw(500, err.message)
-        }
+  @httpGet("/jobs")
+  public async getJobs(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<JobCollection> {
+    try {
+      const jobs = await this.transcodeQueue.getJobs();
+      return jobs;
+    } catch (err: any) {
+      this.logger.log("error", "Cannot get jobs");
+      ctx.throw(500, err.message);
     }
+  }
 
-
-    @httpGet('/status')
-    public async getStatus(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<any> {
-        try {
-            const isPaused = await this.queueRepo.isPaused();
-            return {
-                isPaused: isPaused,
-            };
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot get status');
-            ctx.throw(500, err.message)
-        }
+  @httpGet("/status")
+  public async getStatus(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<any> {
+    try {
+      const isPaused = await this.transcodeQueue.isPaused();
+      return {
+        isPaused: isPaused,
+      };
+    } catch (err: any) {
+      this.logger.log("error", "Cannot get status");
+      ctx.throw(500, err.message);
     }
+  }
 
-
-    @httpPost('/jobs')
-    public async addJob(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
-        ctx.status = 204;
-        try {
-            await this.queueRepo.addJob(ctx.request.body);
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot enqueue job');
-            ctx.throw(500, err.message)
-        }
+  @httpPost("/jobs")
+  public async addJob(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<void> {
+    ctx.status = 204;
+    try {
+      await this.transcodeQueue.addJob(ctx.request.body);
+    } catch (err: any) {
+      this.logger.log("error", "Cannot enqueue job");
+      ctx.throw(500, err.message);
     }
+  }
 
-
-    @httpDelete('/jobs/:id')
-    public async deleteJob(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
-        ctx.status = 204;
-        try {
-            await this.queueService.removeJob(ctx.params?.id);
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot enqueue job');
-            ctx.throw(500, err.message)
-        }
+  @httpDelete("/jobs/:id")
+  public async deleteJob(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<void> {
+    ctx.status = 204;
+    try {
+      await this.transcodeQueue.removeJob(
+        await this.transcodeQueue.getJob(ctx.params?.id)
+      );
+    } catch (err: any) {
+      this.logger.log("error", "Cannot enqueue job");
+      ctx.throw(500, err.message);
     }
+  }
 
-    @httpPost('/pause')
-    public async pause(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
-        try {
-            await this.queueRepo.pauseQueue();
-            ctx.status = 204
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot get jobs');
-            ctx.throw(500, err.message)
-        }
+  @httpPost("/pause")
+  public async pause(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<void> {
+    try {
+      await this.transcodeQueue.pauseQueue();
+      ctx.status = 204;
+    } catch (err: any) {
+      this.logger.log("error", "Cannot get jobs");
+      ctx.throw(500, err.message);
     }
+  }
 
-    @httpPost('/resume')
-    public async resume(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
-        try {
-            await this.queueRepo.resumeQueue();
-            ctx.status = 204
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot get jobs');
-            ctx.throw(500, err.message)
-        }
+  @httpPost("/resume")
+  public async resume(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<void> {
+    try {
+      await this.transcodeQueue.resumeQueue();
+      ctx.status = 204;
+    } catch (err: any) {
+      this.logger.log("error", "Cannot get jobs");
+      ctx.throw(500, err.message);
     }
+  }
 
-    @httpPost('/purge')
-    public async purge(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
-        try {
-            await this.queueRepo.purgeQueue();
-            ctx.status = 204
-        } catch (err: any) {
-            this.logger.log('error', 'Cannot get jobs');
-            ctx.throw(500, err.message)
-        }
+  @httpPost("/purge")
+  public async purge(
+    ctx: Router.IRouterContext,
+    next: () => Promise<any>
+  ): Promise<void> {
+    try {
+      await this.transcodeQueue.purgeQueue();
+      ctx.status = 204;
+    } catch (err: any) {
+      this.logger.log("error", "Cannot get jobs");
+      ctx.throw(500, err.message);
     }
+  }
 }

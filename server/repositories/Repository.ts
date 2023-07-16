@@ -1,3 +1,3 @@
 export interface Repository {
-    initialize(): Promise<void>;
+    initialize(): void;
 }

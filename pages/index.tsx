@@ -1,54 +1,43 @@
 import type { NextPage } from 'next'
 import React from 'react'
-import { Card, Grid, Button, Text } from "@nextui-org/react";
 import io from 'socket.io-client';
 import { useEffect, useState } from 'react';
 import request from 'superagent';
-import { createUseStyles } from 'react-jss'; ``
+import { createUseStyles } from 'react-jss';
 import { FSNode } from '../server/entities/FSNode';
-import { RxCrossCircled } from 'react-icons/rx';
-import Queue from 'bull';
-import { readableBytes } from '../server/utilities/Bytes';
-import { Box } from '../client/components/Box';
-import { NodeTree } from '../client/components/NodeTree';
+import { FileExplorer } from '../client/components/FileExplorer';
 import { ActiveNode } from '../client/components/ActiveNode';
-import { AiOutlinePlayCircle, AiOutlinePauseCircle } from 'react-icons/ai'
-import { MdDeleteSweep } from 'react-icons/md'
-import { SettingsModal } from '../client/components/SettingsModal';
+import { Col, Row, Card, Divider, Typography, Skeleton } from 'antd';
+import { message } from 'antd';
 import getConfig from 'next/config';
+import { Key } from 'antd/es/table/interface';
+import { QueueJobs } from '../client/components/QueueJobs';
+import { JobCollection } from '../server/entities/JobCollection';
+import { NodeStats } from '../client/components/NodeStats';
 const { publicRuntimeConfig } = getConfig()
 
-const socket = io(publicRuntimeConfig.CLIENT_HOST);
+const { Title } = Typography;
+
+const origin =
+	typeof window !== 'undefined' && window.location.origin
+		? window.location.origin
+		: '';
+const socket = io(origin);
 
 const useStyles = createUseStyles({
-	card: {
-		// border: '1px solid #D6D6D6',
-		borderRadius: 3,
-		padding: 10
-	},
-	closeIcon: {
-		cursor: 'pointer',
-		fontSize: 20
-	},
-	jobIcon: {
-		fontSize: 28,
-		cursor: 'pointer'
-	},
-	lightBox: {
-		border: '1px dashed #D6D6D6',
-		borderRadius: 3,
-		padding: 5,
-		margin: 5
-	}
 });
 
 const Home: NextPage = () => {
 	const classes = useStyles();
+	const [messageApi, contextHolder] = message.useMessage();
 	const [isPaused, setIsPaused] = useState(false);
 	const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 	const [nodes, setNodes] = useState();
+	const [nodeStats, setNodeStats] = useState();
 	const [nodesLoading, setNodesLoading] = useState(false);
-	const [jobs, setJobs] = useState<any>({
+	const [statsLoading, setStatsLoading] = useState(false);
+	const [jobsLoading, setJobsLoading] = useState(false);
+	const [jobs, setJobs] = useState<JobCollection>({
 		active: [],
 		delayed: [],
 		completed: [],
@@ -56,30 +45,27 @@ const Home: NextPage = () => {
 		waiting: [],
 	});
 	const [currentNode, setCurrentNode] = useState<FSNode>();
-	const [lastPong, setLastPong] = useState('');
-	const [nodeStates, setNodeStates] = useState<{ [key: string]: boolean }>({});
-
 
 	const onMount = async (): Promise<void> => {
 		socket.on('connect', () => {
 			console.log('Socket is connected!')
 		});
-		socket.on('pong', () => {
-			setLastPong(new Date().toISOString());
-		});
+
 		socket.on('jobsRefresh', (jobsUpdate) => {
-			console.log('jobsRefresh');
+			console.log('jobsRefresh socket fired', jobsUpdate);
 			setJobs(jobsUpdate);
 		});
 		socket.on('nodesRefresh', (nodesUpdate) => {
-			console.log('nodesRefresh');
+			console.log('nodesRefresh socket fired');
 			setNodes(nodesUpdate);
 		});
 		// Get nodes
 		getNodes();
+		// Get status
+		getNodeStats();
 		// Get jobs
 		getJobs();
-		// Get statusd
+		// Get status
 		getStatus();
 	}
 
@@ -91,25 +77,42 @@ const Home: NextPage = () => {
 	}, []);
 
 	const getJobs = async () => {
+		setJobsLoading(true);
 		const jobsRsp = (await request.get('/queue/jobs'))?.body;
 		if (jobsRsp) {
 			setJobs(jobsRsp);
 		}
+		setJobsLoading(false);
 	}
 
 	const getNodes = async () => {
+		setNodesLoading(true);
 		const nodes = (await request.get('/nodes'))?.body;
 		if (nodes) {
 			setNodes(nodes);
 		}
+		setNodesLoading(false);
 	}
 
-	const handleNodeClick = async (node: FSNode) => {
-		const fileNode = (await request.post('/nodes/streams').send({ path: node.path }))?.body;
+	const getNodeStats = async () => {
+		setStatsLoading(true);
+		const stats = (await request.get('/nodes/stats'))?.body;
+		if (stats) {
+			setNodeStats(stats);
+		}
+		setStatsLoading(false);
+	}
+
+	const handleNodeClick = async (selectedKeys: Key[]) => {
+		const path = selectedKeys[0]; // Only handling 1 key at a time.	
+		const fileNode = (await request.get(`/nodes?path=${encodeURIComponent(path)}`))?.body[0];
 		if (fileNode) {
 			setCurrentNode(fileNode);
 		} else {
-			setCurrentNode(node);
+			messageApi.open({
+				type: 'error',
+				content: `Was not able to find streams for node: "${path}"`,
+			});
 		}
 	}
 
@@ -118,151 +121,111 @@ const Home: NextPage = () => {
 		socket.off('disconnect');
 		socket.off('pong');
 	}
+	
 
-	const handleNodeExpand = (path: string) => {
-		setNodeStates({
-			...nodeStates,
-			[path]: nodeStates[path] !== undefined ? !nodeStates[path] : true
-		})
+	const handleBulkConvert = async (nodes: FSNode[]) => {
+		console.log('handleBulkConvert');
+		console.log(nodes);
 	}
-	const addJob = async (node: FSNode) => {
-		const jobs = await request.post('/queue/jobs').send(node);
-		// setJobs(jobs)
+	const handleAddJob = async (node: FSNode) => {
+		await request.post('/queue/jobs').send(node);
+		messageApi.open({
+			type: 'success',
+			content: `Job has been queued`,
+		});
 	}
-	const removeJob = async (id: string) => {
+	const handleRemoveJob = async (id: string) => {
 		await request.delete(`/queue/jobs/${id}`);
+		messageApi.open({
+			type: 'warning',
+			content: `Job ${id} has been stopped and removed`,
+		});
 	}
-	const pauseQueue = async () => {
+	const handlePauseQueue = async () => {
 		await request.post('/queue/pause');
+		messageApi.open({
+			type: 'loading',
+			content: `Jobs are paused`,
+		});
 		setIsPaused(true);
+	}
+	const handleResumeQueue = async () => {
+		await request.post('/queue/resume');
+		messageApi.open({
+			type: 'success',
+			content: `Jobs are running`,
+		});
+		setIsPaused(false);
 	}
 	const getStatus = async () => {
 		const statusRsp = (await request.get('/queue/status')).body;
 		setIsPaused(statusRsp.isPaused);
 	}
-	const resumeQueue = async () => {
-		await request.post('/queue/resume');
-		setIsPaused(false);
-	}
-
-	const displayJobs = (status: 'active' | 'delayed' | 'completed' | 'failed' | 'waiting') => {
-		if (jobs && jobs[status] && jobs[status].length > 0) {
-			return (
-				<Grid.Container>
-					{jobs[status].map((job: Queue.Job) => {
-						return (
-							<Grid key={job.id} xs={12} css={{ marginBottom: 10 }}>
-								<Box>
-									<Grid.Container direction="column">
-										<Grid.Container direction="row" justify="space-between">
-											<Text size={18}># {job.id}</Text>
-											<RxCrossCircled className={classes.closeIcon} onClick={() => removeJob(job.id.toString())} />
-										</Grid.Container>
-										<Grid.Container direction="column" css={{ marginTop: 5 }}>
-											<Text weight="light" size={14}>{job.data?.path}</Text>
-											{job?.data?.progress &&
-												<Grid.Container direction="row" css={{ marginTop: 10 }}>
-													<Grid xs={6}>
-														<Grid.Container direction="column" alignContent="flex-start" className={classes.lightBox}>
-															<Text size={14}>fps: {job.data.progress.fps}</Text>
-															<Text size={14}>bitrate: {job.data.progress.bitrate}</Text>
-															<Text size={14}>out time: {job.data.progress.out_time}</Text>
-														</Grid.Container>
-													</Grid>
-													<Grid xs={6}>
-														<Grid.Container direction="column" alignContent="flex-start" className={classes.lightBox}>
-															<Text size={14}>size: {readableBytes(job.data.progress.total_size)}</Text>
-															<Text size={14}>speed: {job.data.progress.speed}</Text>
-															<Text size={14}>drop frame: {job.data.progress.drop_frames}</Text>
-														</Grid.Container>
-													</Grid>
-												</Grid.Container>
-											}
-										</Grid.Container>
-										<Grid.Container direction="row">
-
-										</Grid.Container>
-									</Grid.Container>
-								</Box>
-							</Grid>
-						)
-					})}
-				</Grid.Container>
-			)
-		}
-	}
-
 	return (
-		<div>
-			<Grid.Container gap={2} justify="center">
-				<Grid xs={4}>
-					<Grid.Container direction="row" alignContent="flex-start">
-						<Grid xs={12} css={{ marginBottom: 20 }}>
-								<Grid.Container gap={1} direction="row" justify="flex-start" alignItems="center">
-									<Grid><AiOutlinePlayCircle className={classes.jobIcon} onClick={() => resumeQueue()} /></Grid>
-									<Grid><AiOutlinePauseCircle className={classes.jobIcon} onClick={() => pauseQueue()} /></Grid>
-									<Grid><MdDeleteSweep className={classes.jobIcon} onClick={() => resumeQueue()} /></Grid>
-								</Grid.Container>
-						</Grid>
-						<Grid xs={12} css={{ marginBottom: 10 }}>
-							<Card className={classes.card}>
-								<Text>Active Jobs</Text>
-								{displayJobs('active')}
-							</Card>
-						</Grid>
-						<Grid xs={12} css={{ marginBottom: 10 }}>
-							<Card className={classes.card}>
-								<Text>Waiting Jobs</Text>
-								{displayJobs('waiting')}
-							</Card>
-						</Grid>
-						<Grid xs={12} css={{ marginBottom: 10 }}>
-							<Card className={classes.card}>
-								<Text>Failed Jobs</Text>
-								{displayJobs('failed')}
-							</Card>
-						</Grid>
-						<Grid xs={12}>
-							<Card className={classes.card}>
-								<Text>Complete Jobs</Text>
-								{displayJobs('completed')}
-							</Card>
-						</Grid>
-					</Grid.Container>
+		<>
+			{contextHolder}
+			<Row justify="center" align="stretch" gutter={16} style={{ width: '100%', height: '100%' }}>
+				<Col span={6}>
+					<QueueJobs
+						jobs={jobs}
+						onPauseQueue={handlePauseQueue}
+						onResumeQueue={handleResumeQueue}
+						onRemoveJob={handleRemoveJob} />
+				</Col>
+				<Col span={18} style={{ width: '100%', height: '100%' }}>
+					<Row justify="space-between" align="middle" style={{ marginBottom: 10, marginLeft: 5 }}>
+						<Col><Title level={5} style={{ margin: 0 }}>File Explorer</Title></Col>
+					</Row>
+					<Card style={{ width: '100%', height: '100%', overflow: 'scroll' }}>
+						<Row>
+							<Col xs={24} lg={16}>
+								{nodesLoading ?
+									<>
+										<Skeleton style={{ padding: 20 }} active />
+										<Skeleton style={{ padding: 20 }} active />
+										<Skeleton style={{ padding: 20 }} active />
+									</>
+									:
+									<FileExplorer
+										nodes={nodes}
+										node={currentNode}
+										onBulkCheckSubmit={handleBulkConvert}
+										onClick={handleNodeClick} />
+								}
+							</Col>
+							<Col xs={24} lg={8} style={{ paddingRight: 20 }}>
+								<Row>
+									{currentNode &&
+										<>
+											<Col span={24}>
+												<ActiveNode
+													onConvert={handleAddJob}
+													node={currentNode}
+													jobs={[].concat(jobs?.active, jobs?.waiting)} />
 
-				</Grid>
-
-				<Grid xs={8}>
-					
-					<Grid.Container direction="row" alignContent="flex-start">
-						{currentNode &&
-							<Grid xs={12} css={{ marginBottom: 20 }}>
-								<ActiveNode
-									onConvert={addJob}
-									node={currentNode}
-									jobs={[].concat(jobs?.active, jobs?.waiting)} />
-							</Grid>
-						}
-						<Grid xs={12}>
-							<Card className={classes.card}>
-								<Text>File Explorer</Text>
-								<NodeTree
-									nodes={nodes}
-									nodeStates={nodeStates}
-									currentNode={currentNode}
-									onClick={handleNodeClick}
-									onExpand={handleNodeExpand}
-									loading={nodesLoading}
-								/>
-							</Card>
-						</Grid>
-					</Grid.Container>
-
-				</Grid>
-
-			</Grid.Container>
-			<SettingsModal open={settingsModalOpen} onClose={() => setSettingsModalOpen(false)}/>
-		</div>
+											</Col>
+											<Divider plain />
+										</>
+									}
+									<Col span={24}>
+										<Title level={5} style={{ margin: 0, marginBottom: 10 }}>Statistics</Title>
+										{statsLoading ?
+											<Skeleton style={{ padding: 20 }} loading={statsLoading} active />
+											:
+											<>
+												<NodeStats stats={nodeStats} />
+												<Divider plain />
+											</>
+										}
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+					</Card>
+				</Col>
+			</Row >
+			{/* <SettingsModal open={settingsModalOpen} onCancel={} onOk={() => setSettingsModalOpen(false)} /> */}
+		</ >
 
 	)
 }

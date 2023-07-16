@@ -29,7 +29,7 @@ export class WatchRepository implements Repository {
             this.logger.log('info', `Watching "${path}" for changes`);
         }).on('all', async () => {
             this.logger.log('info', `Change event within "${path}", refreshing nodes`);
-            const nodes = await this.nodeRepository.refreshNodes();
+            const nodes = await this.nodeRepository.getFreshNodes();
             this.socketService.nodesRefresh(nodes);
         });
     }

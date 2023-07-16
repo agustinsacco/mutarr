@@ -21,6 +21,7 @@ import { NodeController } from './controllers/NodeController';
 import { FSNodeModel } from './models/FSNodeModel';
 import { QueueRepository } from './repositories/QueueRepository';
 import { VideoService } from './services/VideoService';
+import { QueueService } from './services/QueueService';
 
 // Create global Registry
 const container = new Container();
@@ -34,6 +35,7 @@ container.bind<interfaces.Controller>(TYPE.Controller).to(RenderController).when
 // Services
 container.bind<SocketService>('Service').to(SocketService).inSingletonScope().whenTargetNamed('Socket');
 container.bind<VideoService>('Service').to(VideoService).inSingletonScope().whenTargetNamed('Video');
+container.bind<QueueService>('Service').to(QueueService).inSingletonScope().whenTargetNamed('Queue');
 
 // Services
 container.bind<FSNodeModel>('Model').to(FSNodeModel).inSingletonScope().whenTargetNamed('FSNode');

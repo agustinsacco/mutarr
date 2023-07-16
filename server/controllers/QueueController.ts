@@ -6,6 +6,7 @@ import { QueueRepository } from '../repositories/QueueRepository';
 import { Logger } from '../utilities/Logger';
 import Queue from 'bull';
 import { JobCollection } from '../entities/JobCollection';
+import { QueueService } from '../services/QueueService';
 
 @controller('/queue')
 @injectable()
@@ -14,6 +15,7 @@ export class QueueController {
         @inject('config') private config: IConfig,
         @inject('logger') private logger: Logger,
         @inject('Repository') @named('Queue') private queueRepo: QueueRepository,
+        @inject('Service') @named('Queue') private queueService: QueueService,
 
     ) { }
 
@@ -59,7 +61,7 @@ export class QueueController {
     public async deleteJob(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
         ctx.status = 204;
         try {
-            await this.queueRepo.removeJob(ctx.params?.id);
+            await this.queueService.removeJob(ctx.params?.id);
         } catch (err: any) {
             this.logger.log('error', 'Cannot enqueue job');
             ctx.throw(500, err.message)
@@ -69,7 +71,7 @@ export class QueueController {
     @httpPost('/pause')
     public async pause(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
         try {
-            await this.queueRepo.pause();
+            await this.queueRepo.pauseQueue();
             ctx.status = 204
         } catch (err: any) {
             this.logger.log('error', 'Cannot get jobs');
@@ -80,7 +82,18 @@ export class QueueController {
     @httpPost('/resume')
     public async resume(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
         try {
-            await this.queueRepo.resume();
+            await this.queueRepo.resumeQueue();
+            ctx.status = 204
+        } catch (err: any) {
+            this.logger.log('error', 'Cannot get jobs');
+            ctx.throw(500, err.message)
+        }
+    }
+
+    @httpPost('/purge')
+    public async purge(ctx: Router.IRouterContext, next: () => Promise<any>): Promise<void> {
+        try {
+            await this.queueRepo.purgeQueue();
             ctx.status = 204
         } catch (err: any) {
             this.logger.log('error', 'Cannot get jobs');

@@ -1,18 +1,15 @@
 import type { AppProps } from 'next/app'
-import { NextUIProvider, createTheme } from '@nextui-org/react';
-import { Layout } from '../client/components/layout/Layout';
-
-const theme = createTheme({
-	type: 'dark',
-});
+import { MainLayout } from '../client/components/layout/MainLayout';
+import Head from 'next/head';
 
 function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 	return (
-		<NextUIProvider theme={theme}>
-			<Layout>
-				<Component {...pageProps} />
-			</Layout>
-		</NextUIProvider>
+		<MainLayout>
+			<Head>
+				<title>Mutarr</title>
+			</Head>
+			<Component {...pageProps} />
+		</MainLayout>
 	);
 }
 

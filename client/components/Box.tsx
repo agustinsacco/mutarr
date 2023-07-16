@@ -15,13 +15,13 @@ const useStyles = createUseStyles({
 
 type Props = {
     children?: JSX.Element | JSX.Element[];
-    className?: any;
+    style?: any;
 }
 
 export const Box = (props: Props) => {
     const classes = useStyles();
     return (
-        <div className={classNames(classes.root, props.className)}>
+        <div className={classNames(classes.root, props.style)}>
             {props.children}
         </div>
     )

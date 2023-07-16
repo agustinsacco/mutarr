@@ -21,14 +21,25 @@ export class VideoService {
 
     public convert(node: FSNode, onUpdate: Function, onClose: Function): any {
         const name = <string>node.name;
-        // TODO make this configurable from UI
+        let ffmpegCodecOption: string;
+        let ffmpegAudioOption: string;
+        switch (this.config.get<string>('conversionConfig.codec')) {
+            case 'h265':
+                ffmpegCodecOption = 'libx265';
+                ffmpegAudioOption = 'copy'
+                break;
+            case 'h264':
+                ffmpegCodecOption = 'libx264';
+                ffmpegAudioOption = 'aac';
+                break;
+        }
         const ffmpeg = spawn('ffmpeg', [
             '-i',
             node.path,
             '-c:v',
-            'libx265',
+            ffmpegCodecOption,
             '-c:a',
-            'copy',
+            ffmpegAudioOption,
             this.getConvertPath(name),
             '-progress',
             'pipe:1'
@@ -52,7 +63,7 @@ export class VideoService {
 
     public async postConversion(node: FSNode): Promise<void> {
         try {
-            const nodeCheck = await this.nodeRepository.getFileNode(this.getConvertPath(<string>node.name));
+            const nodeCheck = await this.nodeRepository.getNode(this.getConvertPath(<string>node.name), true);
             if (nodeCheck?.streams && nodeCheck?.streams?.length > 0) {
                 try {
                     // Copy converted asset

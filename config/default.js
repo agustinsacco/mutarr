@@ -1,3 +1,4 @@
+
 module.exports = {
     env: process.env.NODE_ENV || 'production',
     app: {
@@ -5,8 +6,9 @@ module.exports = {
     },
     watchPath: '/mutarr/watch',
     convertPath: '/tmp',
-    queueConfig: {
-        concurrency: 2
+    conversionConfig: {
+        concurrency: process.env.CONVERSION_CONCURRENCY,
+        codec: 'h265'
     },
     videoFormats: ['mp4', 'avi', 'mkv', 'mov'],
     server: {

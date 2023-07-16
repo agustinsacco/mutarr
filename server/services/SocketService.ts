@@ -19,7 +19,6 @@ export class SocketService {
     }
 
     private onConnection(socket: Socket) {
-        console.log('onConnection for socketio bro!')
     }
 
     public nodesRefresh(nodes: FSNode[]): void {

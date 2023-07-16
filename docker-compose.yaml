@@ -5,18 +5,26 @@ services:
   mutarr:
     # image: saccodigital/mutarr:main
     build:
-        context: .
-        target: develop
+      context: .
+      target: develop
     container_name: mutarr
+    environment:
+      - NODE_ENV=development
+      - APP_NAME=mutarr
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=3000
+      - CLIENT_HOST=http://localhost:3000
+      - CONVERSION_CODEC=h265
+      - CONVERSION_CONCURRENCY=1
     volumes:
       - ./:/mutarr/lib
-      - ~/Videos:/mutarr/watch/local-videos
-      # - tnas-shows:/mutarr/watch/shows
-      - tnas-videos:/mutarr/watch/nfs-videos
+      - /mutarr/lib/node_modules
+      # - ~/Videos:/mutarr/watch/videos
+      - tnas-shows:/mutarr/watch/shows
+      - tnas-movies:/mutarr/watch/nfs-movies
     command: npm run dev
     ports:
       - 3000:3000
-      - 3001:3001
 
 volumes:
 
@@ -26,14 +34,14 @@ volumes:
       o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
       device: ":/mnt/md0/media/shows"
 
-  # tnas-movies:
-  #   driver_opts:
-  #     type: nfs
-  #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-  #     device: ":/mnt/md0/media/movies"
-
-  tnas-videos:
+  tnas-movies:
     driver_opts:
       type: nfs
       o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-      device: ":/mnt/md0/media/videos"
+      device: ":/mnt/md0/media/movies"
+
+  # tnas-videos:
+  #   driver_opts:
+  #     type: nfs
+  #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
+  #     device: ":/mnt/md0/media/videos"

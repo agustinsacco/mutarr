@@ -7,7 +7,6 @@ import Document, {
     NextScript
 } from 'next/document';
 import React from 'react';
-import { CssBaseline } from '@nextui-org/react';
 import { SheetsRegistry, JssProvider, createGenerateId } from 'react-jss'
 
 class MyDocument extends Document {
@@ -38,12 +37,11 @@ class MyDocument extends Document {
         return (
             <Html lang="en">
                 <Head>
-                    {CssBaseline.flush()}
                     <link rel="shortcut icon" href="/favicon.png" />
                     <link rel="preconnect" href="https://fonts.gstatic.com" />
                     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
                 </Head>
-                <body>
+                <body style={{margin: 0}}>
                     <Main />
                     <NextScript />
                 </body>

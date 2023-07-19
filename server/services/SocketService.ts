@@ -4,6 +4,7 @@ import { Logger } from '../utilities/Logger';
 import { Server, Socket } from 'socket.io';
 import { JobCollection } from '../entities/JobCollection';
 import { FSNode } from '../entities/FSNode';
+import { Job } from 'bullmq';
 
 @injectable()
 export class SocketService {
@@ -25,8 +26,11 @@ export class SocketService {
         this.server.emit('nodesRefresh', nodes);
     }
 
+    public jobUpdate(job: Job): void {
+        this.server.emit('jobUpdate', job);
+    }
+
     public jobsRefresh(jobs: JobCollection): void {
         this.server.emit('jobsRefresh', jobs);
     }
-
 }

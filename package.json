@@ -8,9 +8,8 @@
     "build:server": "tsc --project tsconfig.server.json",
     "lint": "eslint",
     "dev-ts-node": "NODE_ENV=development ts-node-dev --project tsconfig.server.json server/index.ts",
-    "dev": "NODE_ENV=development npm run start:redis && nodemon --exec 'ts-node --project tsconfig.server.json server/index.ts'",
-    "start": "NODE_ENV=production npm run start:redis && node build/server/index.js",
-    "start:redis": "redis-server /mutarr/lib/config/redis.conf"
+    "dev": "NODE_ENV=development nodemon --exec 'ts-node --project tsconfig.server.json server/index.ts'",
+    "start": "NODE_ENV=production node build/server/index.js"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.0",

@@ -2,10 +2,9 @@
 import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { FSNode, FSNodeType } from '../../server/entities/FSNode';
-import { Job } from 'bull';
-import { bytesToReadable } from '../../server/utilities/Bytes';
 import { Col, Row, Badge, Button, Typography } from 'antd';
 import { FileOutlined, FolderOutlined, VideoCameraOutlined } from '@ant-design/icons';
+import { Job } from 'bullmq';
 
 const { Text, Link } = Typography;
 

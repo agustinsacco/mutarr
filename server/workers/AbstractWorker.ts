@@ -1,6 +1,7 @@
-import { Queue, Worker, Job } from "bullmq";
-import { injectable } from "inversify";
-import { Redis } from "ioredis";
+import { Queue, Worker, Job } from 'bullmq';
+import { injectable } from 'inversify';
+import { Redis } from 'ioredis';
+import { SocketService } from '../services/SocketService';
 
 @injectable()
 export abstract class AbstractWorker<D, R> {

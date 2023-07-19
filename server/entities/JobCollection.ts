@@ -1,9 +1,9 @@
-import Queue from "bull";
+import { Job } from 'bullmq';
 
 export interface JobCollection {
-    active: Queue.Job<any>[],
-    delayed: Queue.Job<any>[],
-    completed: Queue.Job<any>[],
-    failed: Queue.Job<any>[],
-    waiting: Queue.Job<any>[],
+  active: Job<any>[];
+  delayed: Job<any>[];
+  completed: Job<any>[];
+  failed: Job<any>[];
+  waiting: Job<any>[];
 }

@@ -7,6 +7,8 @@ import { FSNode } from "../entities/FSNode";
 import { JobCollection } from "../entities/JobCollection";
 import { getFileFormat } from "../utilities/File";
 import Redis from "ioredis";
+import { FSNodeModel } from "../models/FSNodeModel";
+import { SocketService } from "../services/SocketService";
 
 @injectable()
 export class TranscodeQueueRepository implements Repository {
@@ -15,7 +17,9 @@ export class TranscodeQueueRepository implements Repository {
   constructor(
     @inject("config") private config: IConfig,
     @inject("logger") private logger: Logger,
-    @inject("Redis") private redis: Redis
+    @inject("Redis") private redis: Redis,
+    @inject('Model') @named('FSNode') private fsNodeModel: FSNodeModel,
+    @inject('Service') @named('Socket') private socketService: SocketService,
   ) {}
 
   public initialize(): void {
@@ -47,7 +51,8 @@ export class TranscodeQueueRepository implements Repository {
     };
   }
 
-  public async addJob(node: FSNode): Promise<void> {
+  public async addJob(rawNode: FSNode): Promise<void> {
+    const node = await this.fsNodeModel.create(rawNode);
     if (
       this.config
         .get<string[]>("videoFormats")
@@ -57,15 +62,14 @@ export class TranscodeQueueRepository implements Repository {
       this.logger.log("error", "This file is not a video.");
       throw new Error("This file is not a video.");
     }
-
-    const videoStream = node.getVideoStream();
-    // If its a video but already in target codec return false.
-    if (
-      this.config.get<string>("conversionConfig.codec") ==
-      videoStream.codec_name
-    ) {
-      console.log("target code is gucci");
-    }
+    // const videoStream = node.getVideoStream();
+    // // If its a video but already in target codec return false.
+    // if (
+    //   this.config.get<string>("conversionConfig.codec") ==
+    //   videoStream.codec_name
+    // ) {
+    //   console.log("target code is gucci");
+    // }
 
     // Check if node is already part of an active or upcoming job
     if (await this.isScheduled(node.path)) {

@@ -1,9 +1,5 @@
-import { Button, Card, Tree } from 'antd';
-import {
-  CarryOutOutlined,
-  CheckOutlined,
-  FormOutlined,
-} from '@ant-design/icons';
+import { Button, Card, Space, Tree } from 'antd';
+import { CarryOutOutlined, CheckOutlined, FormOutlined } from '@ant-design/icons';
 import { DataNode } from 'antd/es/tree';
 import classNames from 'classnames';
 import React, { useState } from 'react';
@@ -51,7 +47,11 @@ type Props = {
   nodes: FSNode[] | undefined;
   node: FSNode | undefined;
   onClick: Function;
-  onBulkCheckSubmit: Function;
+  onCheck: Function;
+  checkedKeys: Key[];
+  onCheckedSubmit: Function;
+  onCheckedLoading: boolean;
+  onCheckedClear: Function;
 };
 
 export const FileExplorer = (props: Props) => {
@@ -83,7 +83,6 @@ export const FileExplorer = (props: Props) => {
     checked: { checked: Key[]; halfChecked: Key[] } | Key[],
     info: any
   ) => {
-    console.log('onCheck', info);
     const nodes: FSNode[] = [];
     for (const node of info.checkedNodes) {
       const path: any = node.key;
@@ -95,19 +94,41 @@ export const FileExplorer = (props: Props) => {
         });
       }
     }
-    props.onBulkCheckSubmit(nodes);
+    props.onCheck(nodes);
   };
 
   return (
     <div className={classes.root}>
       {props.nodes && (
-        <DirectoryTree
-          checkable
-          showLine={true}
-          onSelect={handleSelect}
-          onCheck={handleCheck}
-          treeData={getTreeData(props.nodes)}
-        />
+        <>
+          {props.checkedKeys && props.checkedKeys.length > 0 && (
+            <Space wrap style={{ marginBottom: 15 }}>
+              <Button
+                onClick={() => props.onCheckedSubmit()}
+                type="primary"
+                size="small"
+                loading={props.onCheckedLoading}
+              >
+                Transcode all
+              </Button>
+              <Button
+                onClick={() => props.onCheckedClear()}
+                size="small"
+                loading={props.onCheckedLoading}
+              >
+                Clear selected
+              </Button>
+            </Space>
+          )}
+          <DirectoryTree
+            checkable
+            showLine={true}
+            checkedKeys={props.checkedKeys}
+            onSelect={handleSelect}
+            onCheck={handleCheck}
+            treeData={getTreeData(props.nodes)}
+          />
+        </>
       )}
     </div>
   );

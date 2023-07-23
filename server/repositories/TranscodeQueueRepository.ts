@@ -1,29 +1,27 @@
-import { inject, injectable, named } from "inversify";
-import { IConfig } from "config";
-import { Logger } from "../utilities/Logger";
-import { Repository } from "./Repository";
-import { Queue, Job } from "bullmq";
-import { FSNode } from "../entities/FSNode";
-import { JobCollection } from "../entities/JobCollection";
-import { getFileFormat } from "../utilities/File";
-import Redis from "ioredis";
-import { FSNodeModel } from "../models/FSNodeModel";
-import { SocketService } from "../services/SocketService";
+import { inject, injectable, named } from 'inversify';
+import { IConfig } from 'config';
+import { Logger } from '../utilities/Logger';
+import { Repository } from './Repository';
+import { Queue, Job } from 'bullmq';
+import { FSNode } from '../entities/FSNode';
+import { JobCollection } from '../entities/JobCollection';
+import { getFileFormat } from '../utilities/File';
+import Redis from 'ioredis';
+import { NodeRepository } from './NodeRepository';
+import { isFileSupported } from '../utilities/Video';
 
 @injectable()
 export class TranscodeQueueRepository implements Repository {
   private queue: Queue;
 
   constructor(
-    @inject("config") private config: IConfig,
-    @inject("logger") private logger: Logger,
-    @inject("Redis") private redis: Redis,
-    @inject('Model') @named('FSNode') private fsNodeModel: FSNodeModel,
-    @inject('Service') @named('Socket') private socketService: SocketService,
+    @inject('config') private config: IConfig,
+    @inject('logger') private logger: Logger,
+    @inject('Redis') private redis: Redis
   ) {}
 
   public initialize(): void {
-    this.queue = new Queue("transcode", { connection: this.redis });
+    this.queue = new Queue('transcode', { connection: this.redis });
   }
 
   public getQueue(): Queue {
@@ -51,35 +49,29 @@ export class TranscodeQueueRepository implements Repository {
     };
   }
 
-  public async addJob(rawNode: FSNode): Promise<void> {
-    const node = await this.fsNodeModel.create(rawNode);
-    if (
-      this.config
-        .get<string[]>("videoFormats")
-        .includes(getFileFormat(<string>node.name))
-    ) {
+  public async addJob(node: FSNode): Promise<void> {
+    if (isFileSupported(getFileFormat(<string>node.name))) {
     } else {
-      this.logger.log("error", "This file is not a video.");
-      throw new Error("This file is not a video.");
+      this.logger.log('error', 'This file is not a video.');
+      throw new Error('This file is not a video.');
     }
-    // const videoStream = node.getVideoStream();
-    // // If its a video but already in target codec return false.
-    // if (
-    //   this.config.get<string>("conversionConfig.codec") ==
-    //   videoStream.codec_name
-    // ) {
-    //   console.log("target code is gucci");
-    // }
+    const videoStream = node.getVideoStream();
+    // If its a video but already in target codec return false.
+    console.log(
+      this.config.get<string>('conversionConfig.codec'),
+      videoStream.codec_name
+    );
+    if (this.config.get<string>('conversionConfig.codec') == videoStream.codec_name) {
+      throw new Error('This video is already in target codec.');
+    }
 
     // Check if node is already part of an active or upcoming job
     if (await this.isScheduled(node.path)) {
       this.logger.log(
-        "error",
-        "This video is already part of an active or upcoming conversion."
+        'error',
+        'This video is already part of an active or upcoming conversion.'
       );
-      throw new Error(
-        "This video is already part of an active or upcoming conversion."
-      );
+      throw new Error('This video is already part of an active or upcoming conversion.');
     }
 
     await this.queue.add(node.path, node);
@@ -90,10 +82,7 @@ export class TranscodeQueueRepository implements Repository {
       await job?.remove();
       return;
     } catch (err: any) {
-      this.logger.log(
-        "error",
-        `Error deleting job ${job.id} | ${err?.message}`
-      );
+      this.logger.log('error', `Error deleting job ${job.id} | ${err?.message}`);
       throw new Error(`Error deleting job ${job.id} | ${err?.message}`);
     }
   }

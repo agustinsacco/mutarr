@@ -21,7 +21,7 @@ export class WatchRepository implements Repository {
     ) { }
 
     public async initialize(): Promise<void> {
-        const path = this.config.get<string>('watchPath');
+        const path = this.config.get<string>('watch.path');
         chokidar.watch(path, {
             ignoreInitial: true,
             usePolling: true

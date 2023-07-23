@@ -17,13 +17,13 @@ import { WatchRepository } from './repositories/WatchRepository';
 import { SocketService } from './services/SocketService';
 import { NodeRepository } from './repositories/NodeRepository';
 import { NodeController } from './controllers/NodeController';
-import { FSNodeModel } from './models/FSNodeModel';
 import { TranscodeQueueRepository } from './repositories/TranscodeQueueRepository';
 import { VideoService } from './services/VideoService';
 import { TranscodeProcessor } from './processors/TranscodeProcessor';
 import Redis from 'ioredis';
 import { AbstractProcessor } from './processors/AbstractProcessor';
 import { TranscodeWorker } from './workers/TranscodeWorker';
+import { StatsRepository } from './repositories/StatsRepository';
 
 // Create global Registry
 const container = new Container();
@@ -83,19 +83,17 @@ container
   .inSingletonScope()
   .whenTargetNamed('Video');
 
-// Services
-container
-  .bind<FSNodeModel>('Model')
-  .to(FSNodeModel)
-  .inSingletonScope()
-  .whenTargetNamed('FSNode');
-
 // Repositories
 container
   .bind<NodeRepository>('Repository')
   .to(NodeRepository)
   .inSingletonScope()
   .whenTargetNamed('Node');
+container
+  .bind<StatsRepository>('Repository')
+  .to(StatsRepository)
+  .inSingletonScope()
+  .whenTargetNamed('Stats');
 container
   .bind<WatchRepository>('Repository')
   .to(WatchRepository)

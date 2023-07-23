@@ -19,6 +19,17 @@ export abstract class AbstractWorker<D, R> {
       concurrency: 1,
       connection: this.connection,
     });
+
+    // Listen to progress and completed events and emit events
+    this.worker.on('progress', (job: Job, progress: number | object) => {
+      this.progress(job, progress);
+    });
+    this.worker.on('completed', (job: Job) => {
+      this.completed(job);
+    });
+    this.worker.on('failed', (job: Job, error: unknown) => {
+      this.failed(job, error);
+    });
     console.log(`Worker for queue ${this.queue.name} started.`);
   }
 
@@ -33,4 +44,7 @@ export abstract class AbstractWorker<D, R> {
   }
 
   public abstract run(job: Job<D>): Promise<R>;
+  public abstract progress(job: Job, progress: number | object): Promise<void>;
+  public abstract completed(job: Job): Promise<void>;
+  public abstract failed(job: Job, error: unknown): Promise<void>;
 }

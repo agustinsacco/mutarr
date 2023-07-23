@@ -21,37 +21,13 @@ services:
       - ~/Videos:/mutarr/watch/videos
       # - tnas-shows:/mutarr/watch/shows
       # - tnas-movies:/mutarr/watch/nfs-movies
+      - tnas-videos:/mutarr/watch/nfs-videos
     command: npm run dev
     ports:
-      - 3000-3002:3000
+      - 3000:3000
     deploy:
       mode: replicated
-      replicas: 3
-
-  # mutarr-worker:
-  #   # image: saccodigital/mutarr:main
-  #   build:
-  #     context: .
-  #     target: develop
-  #   environment:
-  #     - NODE_ENV=development
-  #     - APP_NAME=mutarr
-  #     - SERVER_HOST=0.0.0.0
-  #     - SERVER_PORT=3000
-  #     - REDIS_HOST=redis
-  #     - REDIS_PORT=6379
-  #     - CONVERSION_CODEC=h265
-  #     - CONVERSION_CONCURRENCY=1
-  #   volumes:
-  #     - ./:/mutarr/lib
-  #     - /mutarr/lib/node_modules
-  #     - ~/Videos:/mutarr/watch/videos
-  #     # - tnas-shows:/mutarr/watch/shows
-  #     # - tnas-movies:/mutarr/watch/nfs-movies
-  #   command: npm run dev
-  #   deploy:
-  #     mode: replicated
-  #     replicas: 3
+      replicas: 1
 
   redis:
     image: redis:7.0
@@ -61,20 +37,20 @@ services:
     restart: always
 
 volumes:
-  tnas-shows:
-    driver_opts:
-      type: nfs
-      o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-      device: ":/mnt/md0/media/shows"
-
-  tnas-movies:
-    driver_opts:
-      type: nfs
-      o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-      device: ":/mnt/md0/media/movies"
-
-  # tnas-videos:
+  # tnas-shows:
   #   driver_opts:
   #     type: nfs
   #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-  #     device: ":/mnt/md0/media/videos"
+  #     device: ":/mnt/md0/media/shows"
+
+  # tnas-movies:
+  #   driver_opts:
+  #     type: nfs
+  #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
+  #     device: ":/mnt/md0/media/movies"
+
+  tnas-videos:
+    driver_opts:
+      type: nfs
+      o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
+      device: ":/mnt/md0/media/videos"

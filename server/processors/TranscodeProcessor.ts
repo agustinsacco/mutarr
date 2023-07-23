@@ -11,85 +11,76 @@ import { TranscodeQueueRepository } from '../repositories/TranscodeQueueReposito
 @injectable()
 export class TranscodeProcessor extends AbstractProcessor {
   constructor(
-    @inject('logger') private logger: Logger,
+    @inject('logger') logger: Logger,
     @inject('Service') @named('Video') private videoService: VideoService,
-    @inject('Service') @named('Socket') private socketService: SocketService,
+    @inject('Service') @named('Socket') socketService: SocketService,
+    @inject('Repository')
+    @named('TranscodeQueue')
+    transcodeQueue: TranscodeQueueRepository,
     @inject('Repository')
     @named('TranscodeQueue')
     private queueRepo: TranscodeQueueRepository,
     @inject('Subscriber') subscriber: Redis
   ) {
-    super(subscriber);
+    super(logger, subscriber, socketService, transcodeQueue);
   }
 
-  public async process(job: Job): Promise<{ message: string }> {
-    await this.processConversion(job);
-    return {
-      message: 'Completed ffmpeg conversion',
-    };
-  }
+  public async process(job: Job): Promise<any> {
+    return new Promise(async (resolve, reject): Promise<void> => {
+      const node: FSNode = <FSNode>job.data;
 
-  private async processConversion(job: Job): Promise<void> {
-    const node: FSNode = <FSNode>job.data;
-    return new Promise(async (resolve, reject) => {
       try {
         this.logger.log('info', `Preconversion for ${job.id}`);
         await this.videoService.preConversion(node);
       } catch (err) {
-        return reject(err);
+        this.logger.log('info', `Preconversion failed for ${job.id}`);
+        throw err;
       }
+      const onUpdate = async (data: { [key: string]: string }) => {
+        await job.updateProgress(10);
+        await job.updateData({
+          ...job.data,
+          progress: data,
+        });
+      };
 
-      this.logger.log('info', `Conversion for ${job.id}`);
-      const process = this.videoService.convert(
-        node,
-        // onUpdate update job data with progress
-        async (data: { [key: string]: string }) => {
-          await job.updateData({
-            ...job.data,
-            progress: data,
-          });
-          // Send socket event to clients with full job progress
-          await this.socketService.jobsRefresh(await this.queueRepo.getJobs());
-        },
-        // onClose
-        async (code: number) => {
-          this.logger.log('info', `Completed ${job.id} with code: ${code}`);
-          // Completed successfully
-          if (code == 0) {
-            // Run post conversion
-            try {
-              this.logger.log('info', `Post conversion for ${job.id}`);
-              await this.videoService.postConversion(node);
-              this.logger.log('info', `Completed ${job.id} with code: ${code}`);
-              // Send socket event to clients with full job progress
-              await this.socketService.jobsRefresh(
-                await this.queueRepo.getJobs()
-              );
-              return resolve();
-            } catch (err: any) {
-              this.logger.log(
-                'error',
-                `Post conversion for ${job.id} failed with error: ${err.message}`
-              );
-              return reject(
-                `Post conversion for ${job.id} failed with error: ${err.message}`
-              );
-            }
-          } else {
+      const onClose = async (code: number) => {
+        this.logger.log('info', `Completed ${job.id} with code: ${code}`);
+        // Completed successfully
+        if (code == 0) {
+          // Run post conversion
+          try {
+            this.logger.log('info', `Post conversion for ${job.id}`);
+            await this.videoService.postConversion(job, node);
+            await job.updateProgress(100);
+            this.logger.log('info', `Completed ${job.id} with code: ${code}`);
+            // Send socket event to clients with full job progress
+            resolve(`Completed ${job.id} with code: ${code}`);
+          } catch (err: any) {
             this.logger.log(
               'error',
-              `FFMPEG conversion for ${job.id} failed. Reason unknown.`
+              `Post conversion for ${job.id} failed with error: ${err.message}`
             );
-            return reject(
-              `FFMPEG conversion for ${job.id} failed. Reason unknown.`
-            );
+            reject(`Post conversion for ${job.id} failed with error: ${err.message}`);
           }
+        } else {
+          this.logger.log(
+            'error',
+            `FFMPEG conversion for ${job.id} failed. Reason unknown.`
+          );
+          reject(`FFMPEG conversion for ${job.id} failed. Reason unknown.`);
         }
-      );
-      this.logger.log(
-        'info',
-        `Saving process id ${process.pid} into ${job.id}`
-      );
+      };
+
+      const process = await this.videoService.convert(node, onUpdate, onClose);
+
+      // Setup abort to kill process and job
+      // will reject if abort message is received
+      try {
+        await this.abort(job, process);
+      } catch (err) {
+        reject((<Error>err).message);
+      }
     });
   }
 }

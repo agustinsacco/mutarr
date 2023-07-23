@@ -6,20 +6,20 @@ import { FSNode } from '../entities/FSNode';
 import { swapFormat } from '../utilities/File';
 import fs from 'fs';
 import { NodeRepository } from '../repositories/NodeRepository';
+import { Job } from 'bullmq';
+import { StatsRepository } from '../repositories/StatsRepository';
 
 @injectable()
 export class VideoService {
   constructor(
     @inject('config') private config: IConfig,
     @inject('logger') private logger: Logger,
-    @inject('Repository') @named('Node') private nodeRepository: NodeRepository
+    @inject('Repository') @named('Node') private nodeRepository: NodeRepository,
+    @inject('Repository') @named('Stats') private statsRepository: StatsRepository
   ) {}
 
   private getConvertPath(fileName: string): string {
-    return `${this.config.get<string>('convertPath')}/${swapFormat(
-      fileName,
-      'mp4'
-    )}`;
+    return `${this.config.get<string>('convertPath')}/${swapFormat(fileName, 'mp4')}`;
   }
 
   public convert(
@@ -54,7 +54,6 @@ export class VideoService {
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
       if (counter % 10 === 0) {
-        console.log(`emmitting data update from ffmpeg ${node.path}`);
         onUpdate(this.parseFfmpegOutput(data));
       }
       counter++;
@@ -73,13 +72,14 @@ export class VideoService {
     }
   }
 
-  public async postConversion(node: FSNode): Promise<void> {
+  public async postConversion(job: Job, node: FSNode): Promise<void> {
     try {
-      const nodeCheck = await this.nodeRepository.getNode(
+      const originalNode = await this.nodeRepository.getNode(node.path, true);
+      const newNode = await this.nodeRepository.getNode(
         this.getConvertPath(<string>node.name),
         true
       );
-      if (nodeCheck?.streams && nodeCheck?.streams?.length > 0) {
+      if (newNode?.streams && newNode?.streams?.length > 0) {
         try {
           // Copy converted asset
           await fs.promises.copyFile(
@@ -90,6 +90,9 @@ export class VideoService {
           await fs.promises.rm(this.getConvertPath(<string>node.name));
           // Delete old asset
           await fs.promises.rm(node.path);
+          // Finally lets save complete job stats
+          this.statsRepository.save(job, originalNode, newNode)
+
         } catch (err) {
           throw new Error('Could not move file.');
         }
@@ -97,6 +100,7 @@ export class VideoService {
         throw new Error('No streams found.');
       }
     } catch (err) {
+      console.log(err);
       throw new Error('Converted video is not valid.');
     }
   }

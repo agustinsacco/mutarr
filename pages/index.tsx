@@ -153,11 +153,18 @@ const Home: NextPage = () => {
   const handleNodesCheckedSubmit = async () => {
     setBulkTranscodeLoading(true);
     for (const node of selectedNodes) {
-      await request.post('/queue/jobs').send(node);
-      messageApi.open({
-        type: 'success',
-        content: `Job has been queued`,
-      });
+      try {
+        const rsp = (await request.post('/queue/jobs').send(node)).body;
+        messageApi.open({
+          type: rsp?.error ? 'error' : 'success',
+          content: rsp.message,
+        });
+      } catch (err: any) {
+        messageApi.open({
+          type: 'error',
+          content: 'Unable to queue job for conversion. Check logs',
+        });
+      }
     }
     setBulkTranscodeLoading(false);
     setSelectedNodes([]);
@@ -168,11 +175,18 @@ const Home: NextPage = () => {
   };
 
   const handleAddJob = async (node: FSNode) => {
-    await request.post('/queue/jobs').send(node);
-    messageApi.open({
-      type: 'success',
-      content: `Job has been queued`,
-    });
+    try {
+      const rsp = (await request.post('/queue/jobs').send(node)).body;
+      messageApi.open({
+        type: rsp?.error ? 'error' : 'success',
+        content: rsp.message,
+      });
+    } catch (err: any) {
+      messageApi.open({
+        type: 'error',
+        content: 'Unable to queue job for conversion. Check logs',
+      });
+    }
   };
   const handleRemoveJob = async (id: string) => {
     await request.delete(`/queue/jobs/${id}`);

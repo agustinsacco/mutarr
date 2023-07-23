@@ -13,8 +13,9 @@ services:
       - SERVER_PORT=3000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - CONVERSION_CODEC=h265
-      - CONVERSION_CONCURRENCY=1
+      - TARGET_CODEC=h265
+      - WORKER_CONCURRENCY=1
+      - WATCH_ENABLED=true
     volumes:
       - ./:/mutarr/lib
       - /mutarr/lib/node_modules

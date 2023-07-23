@@ -30,7 +30,7 @@ export class VideoService {
     const name = <string>node.name;
     let ffmpegCodecOption: string;
     let ffmpegAudioOption: string;
-    switch (this.config.get<string>('conversionConfig.codec')) {
+    switch (this.config.get<string>('targetCodec')) {
       case 'h265':
         ffmpegCodecOption = 'libx265';
         ffmpegAudioOption = 'copy';

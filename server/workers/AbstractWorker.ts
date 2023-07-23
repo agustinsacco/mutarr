@@ -2,21 +2,24 @@ import { Queue, Worker, Job } from 'bullmq';
 import { injectable } from 'inversify';
 import { Redis } from 'ioredis';
 import { SocketService } from '../services/SocketService';
+import { IConfig } from 'config';
 
 @injectable()
 export abstract class AbstractWorker<D, R> {
+  protected config: IConfig;
   protected queue: Queue;
   protected worker: Worker | undefined;
   protected connection: Redis;
 
-  constructor(queue: Queue, connection: Redis) {
+  constructor(config: IConfig, queue: Queue, connection: Redis) {
+    this.config = config;
     this.queue = queue;
     this.connection = connection;
   }
 
   public start(): void {
     this.worker = new Worker(this.queue.name, this.run.bind(this), {
-      concurrency: 1,
+      concurrency: this.config.get<number>('workerConcurrency'),
       connection: this.connection,
     });
 

@@ -10,10 +10,9 @@ module.exports = {
     path: '/mutarr/stats',
   },
   convertPath: '/tmp',
-  conversionConfig: {
-    concurrency: process.env.CONVERSION_CONCURRENCY,
-    codec: 'h265',
-  },
+  workerConcurrency: +process.env.WORKER_CONCURRENCY,
+  targetCodec: process.env.TARGET_CODEC,
+  watchEnabled: process.env.WATCH_ENABLED == 'true' ? true : false,
   server: {
     host: process.env.SERVER_HOST ? process.env.SERVER_HOST : '0.0.0.0',
     port: process.env.SERVER_PORT ? +process.env.SERVER_PORT : 3000,

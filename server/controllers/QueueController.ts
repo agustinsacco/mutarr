@@ -74,14 +74,19 @@ export class QueueController {
   public async addJob(
     ctx: Router.IRouterContext,
     next: () => Promise<any>
-  ): Promise<void> {
-    ctx.status = 204;
+  ): Promise<{ message: string; error?: any }> {
+    ctx.status = 200;
     try {
       const node = await this.nodeRepo.getNode(ctx.request.body.path, true);
       await this.transcodeQueue.addJob(node);
+      return {
+        message: `Successfully enqueued transcode job for ${node.name}`,
+      };
     } catch (err: any) {
-      this.logger.log('error', 'Cannot enqueue job');
-      ctx.throw(500, err.message);
+      return {
+        message: err.message,
+        error: err,
+      };
     }
   }
 

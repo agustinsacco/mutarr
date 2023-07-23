@@ -7,19 +7,21 @@ import { AbstractProcessor } from '../processors/AbstractProcessor';
 import { TranscodeQueueRepository } from '../repositories/TranscodeQueueRepository';
 import { Logger } from '../utilities/Logger';
 import { SocketService } from '../services/SocketService';
+import { IConfig } from 'config';
 
 @injectable()
 export class TranscodeWorker extends AbstractWorker<any, any> {
   public constructor(
+    @inject('config') protected config: IConfig,
+    @inject('logger') private logger: Logger,
     @inject('Repository')
     @named('TranscodeQueue')
     private queueRepo: TranscodeQueueRepository,
     @inject('Service') @named('Socket') private socketService: SocketService,
-    @inject('Redis') connection: Redis,
-    @inject('logger') private logger: Logger
+    @inject('Redis') connection: Redis
   ) {
     const queue = queueRepo.getQueue();
-    super(queue, connection);
+    super(config, queue, connection);
   }
 
   public async run(job: Job): Promise<any> {

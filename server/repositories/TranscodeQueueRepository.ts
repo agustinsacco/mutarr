@@ -49,29 +49,37 @@ export class TranscodeQueueRepository implements Repository {
     };
   }
 
+  private getTargetCodecs = () => {
+    if (
+      this.config.get<string>('targetCodec') == 'hvec' ||
+      this.config.get<string>('targetCodec') == 'h265'
+    ) {
+      return ['hevc', 'h265'];
+    }
+    return [this.config.get<string>('targetCodec')];
+  };
+
   public async addJob(node: FSNode): Promise<void> {
     if (isFileSupported(getFileFormat(<string>node.name))) {
     } else {
-      this.logger.log('error', 'This file is not a video.');
-      throw new Error('This file is not a video.');
+      const error = `Unable to queue job. File ${node.name} is not a video file`;
+      this.logger.log('error', error);
+      throw new Error(error);
     }
     const videoStream = node.getVideoStream();
     // If its a video but already in target codec return false.
-    console.log(
-      this.config.get<string>('conversionConfig.codec'),
-      videoStream.codec_name
-    );
-    if (this.config.get<string>('conversionConfig.codec') == videoStream.codec_name) {
-      throw new Error('This video is already in target codec.');
+    console.log(this.getTargetCodecs().includes(videoStream.codec_name.toLowerCase()), this.getTargetCodecs(), videoStream.codec_name.toLowerCase())
+    if (this.getTargetCodecs().includes(videoStream.codec_name.toLowerCase())) {
+      throw new Error(
+        `Unable to queue job. File ${node.name} is already in target codec`
+      );
     }
 
     // Check if node is already part of an active or upcoming job
     if (await this.isScheduled(node.path)) {
-      this.logger.log(
-        'error',
-        'This video is already part of an active or upcoming conversion.'
-      );
-      throw new Error('This video is already part of an active or upcoming conversion.');
+      const error = `Unable to queue job. File ${node.name} is already active or queued`;
+      this.logger.log('error', error);
+      throw new Error(error);
     }
 
     await this.queue.add(node.path, node);

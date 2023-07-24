@@ -2,7 +2,6 @@ import { inject, injectable, named } from 'inversify';
 import { IConfig } from 'config';
 import chokidar from 'chokidar';
 import { Logger } from '../utilities/Logger';
-import ffmpeg from 'ffmpeg';
 import { SocketService } from '../services/SocketService';
 import { Repository } from './Repository';
 import { NodeRepository } from './NodeRepository';
@@ -25,12 +24,18 @@ export class WatchRepository implements Repository {
 
   public async initialize(): Promise<void> {
     const path = this.config.get<string>('watch.path');
+    const master = this.config.get<string>('master');
+    if (!master) {
+        this.logger.log('info', `Node is not master. Will not watch files/folders.`);
+        return;
+    }
     chokidar
       .watch(path, {
         ignoreInitial: true,
         usePolling: true,
       })
       .on('ready', () => {
+        this.logger.log('info', `Node is master.`);
         this.logger.log('info', `Watching "${path}" for changes`);
       })
       .on('all', async (eventName: string, path: string) => {

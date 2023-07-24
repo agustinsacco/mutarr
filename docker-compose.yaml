@@ -16,6 +16,7 @@ services:
       - TARGET_CODEC=h265
       - WORKER_CONCURRENCY=1
       - WATCH_ENABLED=true
+      - MASTER=true
     volumes:
       - ./:/mutarr/lib
       - /mutarr/lib/node_modules

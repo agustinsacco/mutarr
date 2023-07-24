@@ -1,4 +1,4 @@
-import { Button, Card, Col, Row, Skeleton, Spin, Typography } from 'antd';
+import { Button, Card, Col, Divider, Row, Skeleton, Spin, Typography } from 'antd';
 import classNames from 'classnames';
 import React from 'react';
 import { createUseStyles } from 'react-jss';
@@ -42,7 +42,7 @@ export const QueueJobs = (props: Props) => {
           {jobs.map((job: Job) => {
             return (
               <Col key={job.id} span={24}>
-                <Box>
+                {/* <Box> */}
                   <Row justify="space-between">
                     <Col>
                       <Typography.Title level={5} style={{ margin: 0 }}>
@@ -111,7 +111,8 @@ export const QueueJobs = (props: Props) => {
                       </Col>
                     </Row>
                   )}
-                </Box>
+                {/* </Box> */}
+                <Divider />
               </Col>
             );
           })}
@@ -168,11 +169,11 @@ export const QueueJobs = (props: Props) => {
                 <Skeleton style={{ padding: 10 }} active />
               </>
             ) : (
-              <>
+              <React.Fragment>
                 {props?.jobs?.failed && props.jobs.failed.length > 0
                   ? displayJobs(props.jobs.failed, 'failed')
                   : 'No failed jobs'}
-              </>
+              </React.Fragment>
             )}
           </Card>
         </Col>
@@ -182,7 +183,7 @@ export const QueueJobs = (props: Props) => {
           <Card
             size="small"
             title="Complete Jobs"
-            style={{ maxHeight: 600, overflow: 'auto' }}
+            style={{ maxHeight: 600, overflow: 'auto',}}
           >
             {props.loading ? (
               <>

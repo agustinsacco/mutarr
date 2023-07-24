@@ -3,14 +3,14 @@ import { IConfig } from 'config';
 import { Logger } from '../utilities/Logger';
 import { Repository } from './Repository';
 import { promises } from 'fs';
-import ffprobe from 'ffprobe';
-import ffprobeStatic from 'ffprobe-static';
 import path from 'path';
 import { FSNode, FSNodeType } from '../entities/FSNode';
 import { getFileFormat } from '../utilities/File';
 import { bytesToReadable, readableToBytes } from '../utilities/Bytes';
 import { Stats } from '../entities/Stats';
 import { isFileSupported } from '../utilities/Video';
+import { FFProbeResult } from '../entities/FFProbeResult';
+import { cmd } from '../utilities/Process';
 
 @injectable()
 export class NodeRepository implements Repository {
@@ -51,7 +51,7 @@ export class NodeRepository implements Repository {
         // Check if we should get streams for this video format
         if (isFileSupported(format)) {
           try {
-            const streams = (await ffprobe(path, { path: ffprobeStatic.path }))?.streams;
+            const streams = (await this.ffprobe(path))?.streams;
             if (streams) {
               rawNode = {
                 ...rawNode,
@@ -59,12 +59,26 @@ export class NodeRepository implements Repository {
               };
             }
           } catch (err) {
+            console.log(err);
             this.logger.log('error', 'Error getting streams for file node');
           }
         }
       }
     }
     return new FSNode(rawNode);
+  }
+
+  private async ffprobe(path: string): Promise<FFProbeResult> {
+    const ffprobeCmd = `ffprobe -v error -show_entries stream -print_format json "${path}"`;
+
+    const { stdout, stderr, error } = await cmd(ffprobeCmd);
+    if (stderr || error) {
+      throw new Error('Error getting streams for file node');
+    }
+    const ffprobeResult = JSON.parse(<string>stdout);
+    return {
+      streams: ffprobeResult.streams,
+    };
   }
 
   public async getFreshNodes(): Promise<FSNode[]> {

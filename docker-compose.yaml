@@ -19,6 +19,7 @@ services:
       - MASTER=true
     volumes:
       - ./:/mutarr/lib
+      - ./stats:/mutarr/stats
       - /mutarr/lib/node_modules
       - ~/Videos:/mutarr/watch/videos
       # - tnas-shows:/mutarr/watch/shows

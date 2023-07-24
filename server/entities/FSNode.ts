@@ -1,5 +1,5 @@
-import { FFProbeStream } from 'ffprobe';
 import { getFileFormat, getFileName } from '../utilities/File';
+import { FFProbeStream } from './FFProbeResult';
 
 export enum FSNodeType {
   FILE = 'FILE',

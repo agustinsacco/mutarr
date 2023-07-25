@@ -68,7 +68,6 @@ export class TranscodeQueueRepository implements Repository {
     }
     const videoStream = node.getVideoStream();
     // If its a video but already in target codec return false.
-    console.log(this.getTargetCodecs().includes(videoStream.codec_name.toLowerCase()), this.getTargetCodecs(), videoStream.codec_name.toLowerCase())
     if (this.getTargetCodecs().includes(videoStream.codec_name.toLowerCase())) {
       throw new Error(
         `Unable to queue job. File ${node.name} is already in target codec`

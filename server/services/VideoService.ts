@@ -53,13 +53,17 @@ export class VideoService {
     ]);
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
-      if (counter % 10 === 0) {
+      if (counter % 2 === 0) {
         onUpdate(this.parseFfmpegOutput(data));
       }
       counter++;
     });
     ffmpeg.on('close', (code: any) => {
+      console.log('FFMpeg closing...')
       onClose(code);
+    });
+    ffmpeg.on('error', (err: Error) => {
+      console.error('FFMpeg encountered an error', err)
     });
     return ffmpeg;
   }

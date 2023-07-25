@@ -51,38 +51,16 @@ export class VideoService {
       '-progress',
       'pipe:1',
     ]);
-    console.error('PROCESS', ffmpeg);
-    console.error('FFPMEG OPTIONS', 'ffmpeg', [
-      '-i',
-      node.path,
-      '-c:v',
-      ffmpegCodecOption,
-      '-c:a',
-      ffmpegAudioOption,
-      this.getConvertPath(name),
-      '-progress',
-      'pipe:1',
-    ]);
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
-      console.error('STDOUT DATA', data);
       if (counter % 10 === 0) {
         onUpdate(this.parseFfmpegOutput(data));
       }
       counter++;
     });
     ffmpeg.on('close', (code: any) => {
-      console.error('FFMPEG PROCESS CLOSING WITH CODE', code);
       onClose(code);
     });
-    ffmpeg.on('exit', (code: any) => {
-      console.error('FFMPEG PROCESS EXITING WITH CODE', code);
-      // onClose(code);
-    });
-    ffmpeg.on('error', (err) => {
-      console.error('FFMPEG PROCESS ERROR:', err.message);
-    });
-
     return ffmpeg;
   }
 
@@ -113,7 +91,8 @@ export class VideoService {
           // Delete old asset
           await fs.promises.rm(node.path);
           // Finally lets save complete job stats
-          this.statsRepository.save(job, originalNode, newNode);
+          this.statsRepository.save(job, originalNode, newNode)
+
         } catch (err) {
           throw new Error('Could not move file.');
         }

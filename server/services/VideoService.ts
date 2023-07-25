@@ -59,8 +59,17 @@ export class VideoService {
       counter++;
     });
     ffmpeg.on('close', (code: any) => {
+      console.error('FFMPEG PROCESS CLOSING WITH CODE', code);
       onClose(code);
     });
+    ffmpeg.on('exit', (code: any) => {
+      console.error('FFMPEG PROCESS EXITING WITH CODE', code);
+      // onClose(code);
+    });
+    ffmpeg.on('error', (err) => {
+      console.error('FFMPEG PROCESS ERROR:', err.message);
+    });
+
     return ffmpeg;
   }
 
@@ -91,8 +100,7 @@ export class VideoService {
           // Delete old asset
           await fs.promises.rm(node.path);
           // Finally lets save complete job stats
-          this.statsRepository.save(job, originalNode, newNode)
-
+          this.statsRepository.save(job, originalNode, newNode);
         } catch (err) {
           throw new Error('Could not move file.');
         }

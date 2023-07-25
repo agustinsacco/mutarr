@@ -51,8 +51,21 @@ export class VideoService {
       '-progress',
       'pipe:1',
     ]);
+    console.error('PROCESS', ffmpeg);
+    console.error('FFPMEG OPTIONS', 'ffmpeg', [
+      '-i',
+      node.path,
+      '-c:v',
+      ffmpegCodecOption,
+      '-c:a',
+      ffmpegAudioOption,
+      this.getConvertPath(name),
+      '-progress',
+      'pipe:1',
+    ]);
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
+      console.error('STDOUT DATA', data);
       if (counter % 10 === 0) {
         onUpdate(this.parseFfmpegOutput(data));
       }

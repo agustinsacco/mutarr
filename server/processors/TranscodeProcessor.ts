@@ -37,6 +37,8 @@ export class TranscodeProcessor extends AbstractProcessor {
         throw err;
       }
       const onUpdate = async (data: { [key: string]: string }) => {
+        this.logger.log('info', `Updating data for job ${job.id}`);
+        this.logger.log('info', data);
         await job.updateProgress(10);
         await job.updateData({
           ...job.data,
@@ -72,7 +74,14 @@ export class TranscodeProcessor extends AbstractProcessor {
         }
       };
 
-      const process = await this.videoService.convert(node, onUpdate, onClose);
+      const onError = (err: Error) => {
+        this.logger.log(
+          'error',
+          `FFMPEG terminated for job ${job.id}. ${err.message}`
+        );
+      }
+
+      const process = await this.videoService.convert(node, onUpdate, onClose, onError);
 
       // Setup abort to kill process and job
       // will reject if abort message is received

@@ -25,7 +25,8 @@ export class VideoService {
   public convert(
     node: FSNode,
     onUpdate: Function,
-    onClose: Function
+    onClose: Function,
+    onError: Function,
   ): ChildProcessWithoutNullStreams {
     const name = <string>node.name;
     let ffmpegCodecOption: string;
@@ -59,11 +60,10 @@ export class VideoService {
       counter++;
     });
     ffmpeg.on('close', (code: any) => {
-      console.log('FFMpeg closing...')
       onClose(code);
     });
     ffmpeg.on('error', (err: Error) => {
-      console.error('FFMpeg encountered an error', err)
+      onError(err)
     });
     return ffmpeg;
   }

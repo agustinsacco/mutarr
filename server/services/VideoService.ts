@@ -26,7 +26,7 @@ export class VideoService {
     node: FSNode,
     onUpdate: Function,
     onClose: Function,
-    onError: Function,
+    onError: Function
   ): ChildProcessWithoutNullStreams {
     const name = <string>node.name;
     let ffmpegCodecOption: string;
@@ -41,7 +41,7 @@ export class VideoService {
         ffmpegAudioOption = 'aac';
         break;
     }
-    const ffmpeg = spawn('ffmpeg', [
+    const options = [
       '-i',
       node.path,
       '-c:v',
@@ -51,7 +51,9 @@ export class VideoService {
       this.getConvertPath(name),
       '-progress',
       'pipe:1',
-    ]);
+    ];
+    console.log(`ffmpeg ${options.join(' ')}`);
+    const ffmpeg = spawn('ffmpeg', options);
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
       if (counter % 2 === 0) {
@@ -63,7 +65,7 @@ export class VideoService {
       onClose(code);
     });
     ffmpeg.on('error', (err: Error) => {
-      onError(err)
+      onError(err);
     });
     return ffmpeg;
   }
@@ -95,8 +97,7 @@ export class VideoService {
           // Delete old asset
           await fs.promises.rm(node.path);
           // Finally lets save complete job stats
-          this.statsRepository.save(job, originalNode, newNode)
-
+          this.statsRepository.save(job, originalNode, newNode);
         } catch (err) {
           throw new Error('Could not move file.');
         }

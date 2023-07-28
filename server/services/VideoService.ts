@@ -59,11 +59,11 @@ export class VideoService {
       if (counter % 2 === 0) {
         onUpdate(this.parseFfmpegOutput(data));
       }
+      data = '';
       counter++;
     });
-    ffmpeg.stderr.on('data', (data: string) => {
-      console.log('STDERR', data);
-    });
+    ffmpeg.stderr.on('data', (data: string) => {});
+    ffmpeg.stdin.on('data', (data: string) => {});
     ffmpeg.on('close', (code: any) => {
       onClose(code);
     });

@@ -62,8 +62,12 @@ export class VideoService {
       data = '';
       counter++;
     });
-    ffmpeg.stderr.on('data', (data: string) => {});
-    ffmpeg.stdin.on('data', (data: string) => {});
+    ffmpeg.stderr.on('data', (data: string) => {
+      data = '';
+    });
+    ffmpeg.stdin.on('data', (data: string) => {
+      data = '';
+    });
     ffmpeg.on('close', (code: any) => {
       onClose(code);
     });

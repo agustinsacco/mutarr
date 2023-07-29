@@ -46,7 +46,7 @@ export const QueueJobs = (props: Props) => {
                   <Row justify="space-between">
                     <Col>
                       <Typography.Title level={5} style={{ margin: 0 }}>
-                        Job # {job.id}
+                        Transcode #{job.id}
                         {status == 'active' && (
                           <LoadingOutlined style={{ marginLeft: 10 }} />
                         )}

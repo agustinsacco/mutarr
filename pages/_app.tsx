@@ -7,7 +7,8 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 		<MainLayout>
 			<Head>
 				<title>Mutarr</title>
-			</Head>
+				<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
+				<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Tektur:wght@600&display=swap" rel="stylesheet" />			</Head>
 			<Component {...pageProps} />
 		</MainLayout>
 	);

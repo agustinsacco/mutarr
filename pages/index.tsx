@@ -241,26 +241,26 @@ const Home: NextPage = () => {
     <>
       {contextHolder}
       <Row justify="center" align="stretch" gutter={16}>
-        <Col span={24} style={{ marginBottom: 20 }}>
+        <Col span={24}>
           <Row gutter={16}>
-            <Col>
-              <Card bordered={false}>
-                <Statistic title="Transcodes completed" value={jobStats.length} />
+            <Col xs={12} md={4}>
+              <Card bordered={false} style={{ marginBottom: 20 }}>
+                <Statistic title="Transcodes" value={jobStats.length} />
               </Card>
             </Col>
-            <Col>
-              <Card bordered={false}>
-                <Statistic title="Total space saved" value={getTotalSpaceSaved()} />
+            <Col xs={12} md={4}>
+              <Card bordered={false} style={{ marginBottom: 20 }}>
+                <Statistic title="Space saved" value={getTotalSpaceSaved()} />
               </Card>
             </Col>
-            <Col>
-              <Card bordered={false}>
-                <Statistic title="Average saved" value={getTotalSpaceSaved()} />
+            <Col xs={12} md={4}>
+              <Card bordered={false} style={{ marginBottom: 20 }}>
+                <Statistic title="Average saved" value={getAverageSpaceSaved()} />
               </Card>
             </Col>
           </Row>
         </Col>
-        <Col span={6}>
+        <Col md={24} lg={8}>
           <QueueJobs
             loading={jobsLoading}
             jobs={jobs}
@@ -270,7 +270,7 @@ const Home: NextPage = () => {
             onRemoveJob={handleRemoveJob}
           />
         </Col>
-        <Col span={18} style={{ width: '100%', height: '100%' }}>
+        <Col md={24} lg={16} style={{ width: '100%', height: '100%' }}>
           <Row justify="space-between" align="middle" style={{ marginBottom: 10 }}>
             <Col>
               <Title level={5} style={{ margin: 0 }}>
@@ -280,7 +280,7 @@ const Home: NextPage = () => {
           </Row>
           <Card style={{ width: '100%', height: '100%' }}>
             <Row gutter={16}>
-              <Col xs={24} lg={16}>
+              <Col md={24} lg={16}>
                 {nodesLoading ? (
                   <>
                     <Skeleton style={{ padding: 20 }} active />
@@ -300,7 +300,7 @@ const Home: NextPage = () => {
                   />
                 )}
               </Col>
-              <Col xs={24} lg={8} style={{ paddingRight: 20 }}>
+              <Col md={24} lg={8} style={{ paddingRight: 20 }}>
                 <Row>
                   {currentNode && (
                     <>

@@ -4,7 +4,6 @@ import React from 'react';
 import { createUseStyles } from 'react-jss';
 import { bytesToReadable } from '../../server/utilities/Bytes';
 import { JobCollection } from '../../server/entities/JobCollection';
-import { Box } from './Box';
 import {
   CheckCircleOutlined,
   CloseSquareOutlined,

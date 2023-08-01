@@ -13,10 +13,10 @@ export const readableToBytes = (size: string): number => {
     if (size.includes('GB')) {
         // Remove GB
         const gb: number = +(size.replace('GB', '').trim());
-        return gb * 1024 * 1024 * 1024;
+        return gb * 1024 * 1024 * 1024; // bytes
     } else if (size.includes('MB')) {
         // Remove BB
         const mb: number = +(size.replace('MB', '').trim());
-        return mb * 1024 * 1024;
+        return mb * 1024 * 1024; // bytes
     }
 }

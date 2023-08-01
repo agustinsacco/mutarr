@@ -14,9 +14,10 @@ import { Key } from 'antd/es/table/interface';
 import { QueueJobs } from '../client/components/QueueJobs';
 import { JobCollection } from '../server/entities/JobCollection';
 import { Job } from 'bullmq';
-import { bytesToReadable } from '../server/utilities/Bytes';
+import { bytesToReadable, readableToBytes } from '../server/utilities/Bytes';
 import { extractNumbersFromString } from '../server/utilities/String';
 import { isFileSupported } from '../server/utilities/Video';
+import { StatsModal } from '../client/components/SettingsModal';
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -35,6 +36,7 @@ const Home: NextPage = () => {
   const [nodes, setNodes] = useState();
   const [jobStats, setJobStats] = useState([]);
   const [jobStatsLoading, setJobStatsLoading] = useState(false);
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [bulkTranscodeLoading, setBulkTranscodeLoading] = useState(false);
   const [nodesLoading, setNodesLoading] = useState(false);
   const [jobsLoading, setJobsLoading] = useState(false);
@@ -219,22 +221,21 @@ const Home: NextPage = () => {
   const getTotalSpaceSaved = () => {
     let total = 0; // Base is MB
     for (const jobStat of jobStats) {
-      const originalSize = +extractNumbersFromString(jobStat.originalNode.size);
-      const newSize = +extractNumbersFromString(jobStat.newNode.size);
+      const originalSize = readableToBytes(jobStat.originalNode.size);
+      const newSize = readableToBytes(jobStat.newNode.size);
       total = total + (originalSize - newSize);
     }
-    const bytes = total * 1024 * 1024; // Total kb for jobs
-    return bytesToReadable(bytes);
+    return bytesToReadable(total);
   };
 
   const getAverageSpaceSaved = () => {
     let total = 0; // Base is MB
     for (const jobStat of jobStats) {
-      const originalSize = +extractNumbersFromString(jobStat.originalNode.size);
-      const newSize = +extractNumbersFromString(jobStat.newNode.size);
+      const originalSize = readableToBytes(jobStat.originalNode.size);
+      const newSize = readableToBytes(jobStat.newNode.size);
       total = total + (originalSize - newSize);
     }
-    const bytes = (total * 1024 * 1024) / jobStats.length; // Avg kb per job
+    const bytes = total / jobStats.length; // Avg kb per job
     return bytesToReadable(bytes);
   };
   return (
@@ -245,7 +246,9 @@ const Home: NextPage = () => {
           <Row gutter={16}>
             <Col xs={12} md={4}>
               <Card bordered={false} style={{ marginBottom: 20 }}>
-                <Statistic title="Transcodes" value={jobStats.length} />
+                <a onClick={() => setStatsModalOpen(true)}>
+                  <Statistic title="Transcodes" value={jobStats.length} />
+                </a>
               </Card>
             </Col>
             <Col xs={12} md={4}>
@@ -320,7 +323,12 @@ const Home: NextPage = () => {
           </Card>
         </Col>
       </Row>
-      {/* <SettingsModal open={settingsModalOpen} onCancel={} onOk={() => setSettingsModalOpen(false)} /> */}
+      <StatsModal
+        title="Transcodes"
+        open={statsModalOpen}
+        stats={jobStats}
+        onCancel={() => setStatsModalOpen(false)}
+      />
     </>
   );
 };

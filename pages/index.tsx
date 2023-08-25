@@ -39,9 +39,7 @@ const origin =
   window.location.origin
     ? window.location.origin
     : '';
-const socket = io(origin, {
-  transports: ['websocket'],
-});
+const socket = io(origin);
 
 const useStyles = createUseStyles({});
 

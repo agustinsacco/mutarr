@@ -41,7 +41,6 @@ const origin =
     : '';
 const socket = io(origin, {
   transports: ['websocket'],
-  secure: true,
 });
 
 const useStyles = createUseStyles({});

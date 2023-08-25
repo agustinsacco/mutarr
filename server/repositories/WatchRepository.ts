@@ -44,7 +44,7 @@ export class WatchRepository implements Repository {
 
           try {
             const node = await this.nodeRepository.getNode(path, true);
-            this.transcodeQueue.addJob(node);
+            await this.transcodeQueue.addJob(node);
           } catch (err: any) {
             this.logger.log(
               'error',

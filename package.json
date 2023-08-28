@@ -12,9 +12,9 @@
     "start": "NODE_ENV=production node build/server/index.js"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.0.0",
+    "@ant-design/icons": "^5.2.5",
     "@koa/cors": "^4.0.0",
-    "antd": "^5.1.2",
+    "antd": "^5.8.4",
     "bullmq": "^4.3.0",
     "chokidar": "^3.5.3",
     "classnames": "^2.3.2",
@@ -44,7 +44,6 @@
     "@types/koa-cookie": "^1.0.0",
     "@types/koa-router": "^7.4.4",
     "@types/react": "18.0.14",
-    "@types/react-dom": "18.0.5",
     "@types/superagent": "^4.1.16",
     "eslint": "8.18.0",
     "eslint-config-next": "^13.1.1",

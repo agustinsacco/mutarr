@@ -7,13 +7,8 @@ import { FSNode } from '../entities/FSNode';
 import { existsSync, readdirSync, writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { Job } from 'bullmq';
 import path from 'path';
+import { JobStats } from '../entities/Stats';
 
-interface JobStats {
-  timestamp: string;
-  job: Job;
-  originalNode: FSNode;
-  newNode: FSNode;
-}
 @injectable()
 export class StatsRepository implements Repository {
   private statsPath: string = this.config.get<string>('stats.path');
@@ -53,7 +48,7 @@ export class StatsRepository implements Repository {
     }
   }
 
-  public async getAll(): Promise<any> {
+  public async getAll(): Promise<JobStats[]> {
     const stats: any[] = [];
     try {
       // Read the list of files in the directory

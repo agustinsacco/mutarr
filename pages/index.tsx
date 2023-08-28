@@ -7,48 +7,74 @@ import { createUseStyles } from 'react-jss';
 import { FSNode } from '../server/entities/FSNode';
 import { FileExplorer } from '../client/components/FileExplorer';
 import { ActiveNode } from '../client/components/ActiveNode';
-import { Col, Row, Card, Divider, Typography, Skeleton, Statistic, Button } from 'antd';
+import {
+  Col,
+  Row,
+  Card,
+  Divider,
+  Typography,
+  Skeleton,
+  Statistic,
+  Button,
+} from 'antd';
 import { message } from 'antd';
 import getConfig from 'next/config';
 import { Key } from 'antd/es/table/interface';
 import { QueueJobs } from '../client/components/QueueJobs';
 import { JobCollection } from '../server/entities/JobCollection';
 import { Job } from 'bullmq';
-import { bytesToReadable, readableToBytes } from '../server/utilities/Bytes';
-import { extractNumbersFromString } from '../server/utilities/String';
+import {
+  bytesToReadable,
+  readableToBytes,
+} from '../server/utilities/Bytes';
 import { isFileSupported } from '../server/utilities/Video';
-import { StatsModal } from '../client/components/SettingsModal';
+import { StatsModal } from '../client/components/StatsModal';
 
 const { publicRuntimeConfig } = getConfig();
 
 const { Title } = Typography;
 
 const origin =
-  typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
+  typeof window !== 'undefined' &&
+  window.location.origin
+    ? window.location.origin
+    : '';
 const socket = io(origin);
 
 const useStyles = createUseStyles({});
 
 const Home: NextPage = () => {
   const classes = useStyles();
-  const [messageApi, contextHolder] = message.useMessage();
+  const [messageApi, contextHolder] =
+    message.useMessage();
   const [isPaused, setIsPaused] = useState(false);
   const [nodes, setNodes] = useState();
   const [jobStats, setJobStats] = useState([]);
-  const [jobStatsLoading, setJobStatsLoading] = useState(false);
-  const [statsModalOpen, setStatsModalOpen] = useState(false);
-  const [bulkTranscodeLoading, setBulkTranscodeLoading] = useState(false);
-  const [nodesLoading, setNodesLoading] = useState(false);
-  const [jobsLoading, setJobsLoading] = useState(false);
-  const [jobs, setJobs] = useState<JobCollection>({
-    active: [],
-    delayed: [],
-    completed: [],
-    failed: [],
-    waiting: [],
-  });
-  const [currentNode, setCurrentNode] = useState<FSNode>();
-  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [jobStatsLoading, setJobStatsLoading] =
+    useState(false);
+  const [statsModalOpen, setStatsModalOpen] =
+    useState(false);
+  const [
+    bulkTranscodeLoading,
+    setBulkTranscodeLoading,
+  ] = useState(false);
+  const [nodesLoading, setNodesLoading] =
+    useState(false);
+  const [jobsLoading, setJobsLoading] =
+    useState(false);
+  const [jobs, setJobs] = useState<JobCollection>(
+    {
+      active: [],
+      delayed: [],
+      completed: [],
+      failed: [],
+      waiting: [],
+    }
+  );
+  const [currentNode, setCurrentNode] =
+    useState<FSNode>();
+  const [selectedNodes, setSelectedNodes] =
+    useState([]);
 
   const onMount = async (): Promise<void> => {
     socket.on('connect', () => {
@@ -56,7 +82,10 @@ const Home: NextPage = () => {
     });
 
     socket.on('jobUpdate', (updatedJob: Job) => {
-      console.log('jobUpdate socket fired', updatedJob);
+      console.log(
+        'jobUpdate socket fired',
+        updatedJob
+      );
       setJobs({
         ...jobs,
         active:
@@ -70,10 +99,16 @@ const Home: NextPage = () => {
             : [updatedJob],
       });
     });
-    socket.on('jobsRefresh', (jobs: JobCollection) => {
-      console.log('jobsRefresh socket fired', jobs);
-      setJobs(jobs);
-    });
+    socket.on(
+      'jobsRefresh',
+      (jobs: JobCollection) => {
+        console.log(
+          'jobsRefresh socket fired',
+          jobs
+        );
+        setJobs(jobs);
+      }
+    );
     socket.on('nodesRefresh', (nodesUpdate) => {
       console.log('nodesRefresh socket fired');
       setNodes(nodesUpdate);
@@ -97,7 +132,9 @@ const Home: NextPage = () => {
 
   const getJobs = async () => {
     setJobsLoading(true);
-    const jobsRsp = (await request.get('/queue/jobs'))?.body;
+    const jobsRsp = (
+      await request.get('/queue/jobs')
+    )?.body;
     if (jobsRsp) {
       setJobs(jobsRsp);
     }
@@ -106,7 +143,8 @@ const Home: NextPage = () => {
 
   const getNodes = async () => {
     setNodesLoading(true);
-    const nodes = (await request.get('/nodes'))?.body;
+    const nodes = (await request.get('/nodes'))
+      ?.body;
     if (nodes) {
       setNodes(nodes);
     }
@@ -115,17 +153,24 @@ const Home: NextPage = () => {
 
   const getJobStats = async () => {
     setJobStatsLoading(true);
-    const stats = (await request.get('/queue/jobs/stats'))?.body;
+    const stats = (
+      await request.get('/queue/jobs/stats')
+    )?.body;
     if (stats) {
       setJobStats(stats);
     }
     setJobStatsLoading(false);
   };
 
-  const handleNodeClick = async (selectedKeys: Key[]) => {
+  const handleNodeClick = async (
+    selectedKeys: Key[]
+  ) => {
     const path = selectedKeys[0]; // Only handling 1 key at a time.
-    const fileNode = (await request.get(`/nodes?path=${encodeURIComponent(path)}`))
-      ?.body[0];
+    const fileNode = (
+      await request.get(
+        `/nodes?path=${encodeURIComponent(path)}`
+      )
+    )?.body[0];
     if (fileNode) {
       setCurrentNode(fileNode);
     } else {
@@ -142,8 +187,9 @@ const Home: NextPage = () => {
     socket.off('pong');
   };
 
-  const handleNodesChecked = async (nodes: FSNode[]) => {
-    console.log('handleNodesChecked');
+  const handleNodesChecked = async (
+    nodes: FSNode[]
+  ) => {
     const filteredNodes = nodes.filter((node) => {
       if (isFileSupported(node.path)) {
         return node;
@@ -156,7 +202,11 @@ const Home: NextPage = () => {
     setBulkTranscodeLoading(true);
     for (const node of selectedNodes) {
       try {
-        const rsp = (await request.post('/queue/jobs').send(node)).body;
+        const rsp = (
+          await request
+            .post('/queue/jobs')
+            .send(node)
+        ).body;
         messageApi.open({
           type: rsp?.error ? 'error' : 'success',
           content: rsp.message,
@@ -164,7 +214,8 @@ const Home: NextPage = () => {
       } catch (err: any) {
         messageApi.open({
           type: 'error',
-          content: 'Unable to queue job for conversion. Check logs',
+          content:
+            'Unable to queue job for conversion. Check logs',
         });
       }
     }
@@ -178,7 +229,11 @@ const Home: NextPage = () => {
 
   const handleAddJob = async (node: FSNode) => {
     try {
-      const rsp = (await request.post('/queue/jobs').send(node)).body;
+      const rsp = (
+        await request
+          .post('/queue/jobs')
+          .send(node)
+      ).body;
       messageApi.open({
         type: rsp?.error ? 'error' : 'success',
         content: rsp.message,
@@ -186,7 +241,8 @@ const Home: NextPage = () => {
     } catch (err: any) {
       messageApi.open({
         type: 'error',
-        content: 'Unable to queue job for conversion. Check logs',
+        content:
+          'Unable to queue job for conversion. Check logs',
       });
     }
   };
@@ -214,15 +270,21 @@ const Home: NextPage = () => {
     setIsPaused(false);
   };
   const getStatus = async () => {
-    const statusRsp = (await request.get('/queue/status')).body;
+    const statusRsp = (
+      await request.get('/queue/status')
+    ).body;
     setIsPaused(statusRsp.isPaused);
   };
 
   const getTotalSpaceSaved = () => {
     let total = 0; // Base is MB
     for (const jobStat of jobStats) {
-      const originalSize = readableToBytes(jobStat.originalNode.size);
-      const newSize = readableToBytes(jobStat.newNode.size);
+      const originalSize = readableToBytes(
+        jobStat.originalNode.size
+      );
+      const newSize = readableToBytes(
+        jobStat.newNode.size
+      );
       total = total + (originalSize - newSize);
     }
     return bytesToReadable(total);
@@ -231,8 +293,12 @@ const Home: NextPage = () => {
   const getAverageSpaceSaved = () => {
     let total = 0; // Base is MB
     for (const jobStat of jobStats) {
-      const originalSize = readableToBytes(jobStat.originalNode.size);
-      const newSize = readableToBytes(jobStat.newNode.size);
+      const originalSize = readableToBytes(
+        jobStat.originalNode.size
+      );
+      const newSize = readableToBytes(
+        jobStat.newNode.size
+      );
       total = total + (originalSize - newSize);
     }
     const bytes = total / jobStats.length; // Avg kb per job
@@ -241,24 +307,50 @@ const Home: NextPage = () => {
   return (
     <>
       {contextHolder}
-      <Row justify="center" align="stretch" gutter={16}>
+      <Row
+        justify="center"
+        align="stretch"
+        gutter={16}
+      >
         <Col span={24}>
           <Row gutter={16}>
             <Col xs={12} md={4}>
-              <Card bordered={false} style={{ marginBottom: 20 }}>
-                <a onClick={() => setStatsModalOpen(true)}>
-                  <Statistic title="Transcodes" value={jobStats.length} />
+              <Card
+                bordered={false}
+                style={{ marginBottom: 20 }}
+              >
+                <a
+                  onClick={() =>
+                    setStatsModalOpen(true)
+                  }
+                >
+                  <Statistic
+                    title="Transcodes"
+                    value={jobStats.length}
+                  />
                 </a>
               </Card>
             </Col>
             <Col xs={12} md={4}>
-              <Card bordered={false} style={{ marginBottom: 20 }}>
-                <Statistic title="Space saved" value={getTotalSpaceSaved()} />
+              <Card
+                bordered={false}
+                style={{ marginBottom: 20 }}
+              >
+                <Statistic
+                  title="Space saved"
+                  value={getTotalSpaceSaved()}
+                />
               </Card>
             </Col>
             <Col xs={12} md={4}>
-              <Card bordered={false} style={{ marginBottom: 20 }}>
-                <Statistic title="Average saved" value={getAverageSpaceSaved()} />
+              <Card
+                bordered={false}
+                style={{ marginBottom: 20 }}
+              >
+                <Statistic
+                  title="Average saved"
+                  value={getAverageSpaceSaved()}
+                />
               </Card>
             </Col>
           </Row>
@@ -273,22 +365,50 @@ const Home: NextPage = () => {
             onRemoveJob={handleRemoveJob}
           />
         </Col>
-        <Col md={24} lg={16} style={{ width: '100%', height: '100%' }}>
-          <Row justify="space-between" align="middle" style={{ marginBottom: 10 }}>
+        <Col
+          md={24}
+          lg={16}
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <Row
+            justify="space-between"
+            align="middle"
+            style={{ marginBottom: 10 }}
+          >
             <Col>
-              <Title level={5} style={{ margin: 0 }}>
+              <Title
+                level={5}
+                style={{ margin: 0 }}
+              >
                 File Explorer
               </Title>
             </Col>
           </Row>
-          <Card style={{ width: '100%', height: '100%' }}>
+          <Card
+            style={{
+              width: '100%',
+              height: '100%',
+            }}
+          >
             <Row gutter={16}>
               <Col md={24} lg={16}>
                 {nodesLoading ? (
                   <>
-                    <Skeleton style={{ padding: 20 }} active />
-                    <Skeleton style={{ padding: 20 }} active />
-                    <Skeleton style={{ padding: 20 }} active />
+                    <Skeleton
+                      style={{ padding: 20 }}
+                      active
+                    />
+                    <Skeleton
+                      style={{ padding: 20 }}
+                      active
+                    />
+                    <Skeleton
+                      style={{ padding: 20 }}
+                      active
+                    />
                   </>
                 ) : (
                   <FileExplorer
@@ -296,14 +416,26 @@ const Home: NextPage = () => {
                     node={currentNode}
                     onCheck={handleNodesChecked}
                     onClick={handleNodeClick}
-                    checkedKeys={selectedNodes.map((node) => node.path)}
-                    onCheckedSubmit={handleNodesCheckedSubmit}
-                    onCheckedClear={handleNodesCheckedClear}
-                    onCheckedLoading={bulkTranscodeLoading}
+                    checkedKeys={selectedNodes.map(
+                      (node) => node.path
+                    )}
+                    onCheckedSubmit={
+                      handleNodesCheckedSubmit
+                    }
+                    onCheckedClear={
+                      handleNodesCheckedClear
+                    }
+                    onCheckedLoading={
+                      bulkTranscodeLoading
+                    }
                   />
                 )}
               </Col>
-              <Col md={24} lg={8} style={{ paddingRight: 20 }}>
+              <Col
+                md={24}
+                lg={8}
+                style={{ paddingRight: 20 }}
+              >
                 <Row>
                   {currentNode && (
                     <>
@@ -311,7 +443,10 @@ const Home: NextPage = () => {
                         <ActiveNode
                           onConvert={handleAddJob}
                           node={currentNode}
-                          jobs={[].concat(jobs?.active, jobs?.waiting)}
+                          jobs={[].concat(
+                            jobs?.active,
+                            jobs?.waiting
+                          )}
                         />
                       </Col>
                       <Divider plain />

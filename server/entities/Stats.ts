@@ -1,3 +1,5 @@
+import { Job } from "bullmq"
+import { FSNode } from "./FSNode"
 
 export interface Stats {
     directories: {
@@ -16,3 +18,11 @@ interface CodecStats {
     count: number,
     size: number | string
 }
+
+
+export interface JobStats {
+    timestamp: string;
+    job: Job;
+    originalNode: FSNode;
+    newNode: FSNode;
+  }

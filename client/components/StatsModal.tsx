@@ -2,6 +2,9 @@ import { Modal, Button, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { ReactEventHandler, useState } from 'react';
 import { createUseStyles } from 'react-jss';
+import { JobStats } from '../../server/entities/Stats';
+import { bytesToReadable, readableToBytes } from '../../server/utilities/Bytes';
+import { FSNode } from '../../server/entities/FSNode';
 
 const useStyles = createUseStyles({
   root: {
@@ -18,7 +21,7 @@ type Props = {
   onCancel: any;
   onOk?: any;
   title: string;
-  stats: any[];
+  stats: JobStats[];
 };
 
 interface DataType {
@@ -27,7 +30,7 @@ interface DataType {
   jobId: string;
   timestamp: string;
   outTime: string;
-  originalCodec: number;
+  originalCodec: string;
   originalSize: string;
   newCodec: string;
   newSize: string;
@@ -48,7 +51,30 @@ const columns: ColumnsType<DataType> = [
 
 export const StatsModal = (props: Props) => {
   const classes = useStyles();
-  const [data, setData] = useState([]);
+
+  const getData = (): DataType[] => {
+    return props.stats.map((stat: JobStats) => {
+      console.log('stat', stat);
+      return {
+        key: stat.originalNode.path,
+        path: stat.originalNode.path,
+        jobId: stat.job.id,
+        timestamp: stat.timestamp,
+        outTime: stat.job.data.progress.out_time,
+        originalCodec: stat.originalNode.streams[0].codec_name, // assume first is video,
+        originalSize: stat.originalNode.size,
+        newCodec: stat.newNode.streams[0].codec_name, // assume first is video,
+        newSize: stat.newNode.size,
+        spaceSaved: getSpaceSaved(stat.originalNode, stat.newNode),
+      };
+    });
+  };
+
+  const getSpaceSaved = (originalNode: FSNode, newNode: FSNode) => {
+    const originalSize = readableToBytes(originalNode.size);
+    const newSize = readableToBytes(newNode.size);
+    return bytesToReadable(originalSize - newSize);
+  };
 
   return (
     <Modal
@@ -59,7 +85,14 @@ export const StatsModal = (props: Props) => {
       onOk={props?.onOk}
       onCancel={props.onCancel}
     >
-      <Table columns={columns} dataSource={data} size="small" />
+      <Table
+        columns={columns}
+        dataSource={getData()}
+        pagination={false}
+        scroll={{ x: 2000, y: 500 }}
+        bordered
+        size="small"
+      />
     </Modal>
   );
 };

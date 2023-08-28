@@ -47,22 +47,22 @@ export const QueueJobs = (props: Props) => {
                       <Typography.Title level={5} style={{ margin: 0 }}>
                         Transcode #{job.id}
                         {status == 'active' && (
-                          <LoadingOutlined style={{ marginLeft: 10 }} />
+                          <LoadingOutlined rev={""}  style={{ marginLeft: 10 }} />
                         )}
                         {status == 'failed' && (
-                          <ExclamationCircleOutlined
+                          <ExclamationCircleOutlined rev={""} 
                             style={{ marginLeft: 10, color: 'red' }}
                           />
                         )}
                         {status == 'completed' && (
-                          <CheckCircleOutlined
+                          <CheckCircleOutlined rev={""} 
                             style={{ marginLeft: 10, color: 'green' }}
                           />
                         )}
                       </Typography.Title>
                     </Col>
                     <Col>
-                      <CloseSquareOutlined
+                      <CloseSquareOutlined rev={""} 
                         onClick={() => props.onRemoveJob(job.id.toString())}
                       />
                     </Col>
@@ -129,8 +129,8 @@ export const QueueJobs = (props: Props) => {
           </Title>
         </Col>
         <Col>
-          <Button icon={<PlayCircleOutlined />} onClick={() => props.onResumeQueue()} />
-          <Button loading={props.isPaused} icon={<PauseOutlined />} onClick={() => props.onPauseQueue()} />
+          <Button icon={<PlayCircleOutlined rev={""}  />} onClick={() => props.onResumeQueue()} />
+          <Button loading={props.isPaused} icon={<PauseOutlined rev={""}  />} onClick={() => props.onPauseQueue()} />
         </Col>
       </Row>
       <Row style={{ marginBottom: 10 }}>

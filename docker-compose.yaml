@@ -23,8 +23,7 @@ services:
       - /mutarr/lib/node_modules
       - ~/Videos:/mutarr/watch/videos
       # - tnas-shows:/mutarr/watch/shows
-      # - tnas-movies:/mutarr/watch/nfs-movies
-      - tnas-videos:/mutarr/watch/nfs-videos
+      - tnas-movies:/mutarr/watch/movies
     command: npm run dev
     ports:
       - 3000:3000
@@ -46,14 +45,14 @@ volumes:
   #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
   #     device: ":/mnt/md0/media/shows"
 
-  # tnas-movies:
-  #   driver_opts:
-  #     type: nfs
-  #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-  #     device: ":/mnt/md0/media/movies"
-
-  tnas-videos:
+  tnas-movies:
     driver_opts:
       type: nfs
       o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
-      device: ":/mnt/md0/media/videos"
+      device: ":/mnt/md0/media/movies"
+
+  # tnas-videos:
+  #   driver_opts:
+  #     type: nfs
+  #     o: "addr=192.168.1.243,nolock,soft,rw,vers=4"
+  #     device: ":/mnt/md0/media/videos"

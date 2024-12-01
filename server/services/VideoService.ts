@@ -16,7 +16,7 @@ export class VideoService {
     @inject('logger') private logger: Logger,
     @inject('Repository') @named('Node') private nodeRepository: NodeRepository,
     @inject('Repository') @named('Stats') private statsRepository: StatsRepository
-  ) {}
+  ) { }
 
   private getConvertPath(fileName: string): string {
     return `${this.config.get<string>('convertPath')}/${swapFormat(fileName, 'mp4')}`;
@@ -52,7 +52,7 @@ export class VideoService {
       '-progress',
       'pipe:1',
     ];
-    console.log(`ffmpeg ${options.join(' ')}`);
+    this.logger.log('info', `ffmpeg ${options.join(' ')}`);
     const ffmpeg = spawn('ffmpeg', options);
     let counter = 0; // Used to limit the amount of stdout we are emitting
     ffmpeg.stdout.on('data', (data: string) => {
@@ -80,8 +80,15 @@ export class VideoService {
   public async preConversion(node: FSNode): Promise<void> {
     // Delete converted asset in conversion folder
     const path = this.getConvertPath(<string>node.name);
+    this.logger.log('info', 'preConversion - Checking if path exists',)
     if (fs.existsSync(path)) {
-      await fs.rmSync(this.getConvertPath(<string>node.name));
+      this.logger.log('info', 'preConversion - Path exists! deleting it')
+      try {
+        await fs.rmSync(this.getConvertPath(<string>node.name));
+      } catch (err) {
+        this.logger.log('error', 'preConversion failed.');
+        this.logger.log('error', err);
+      }
     }
   }
 
@@ -112,7 +119,8 @@ export class VideoService {
         throw new Error('No streams found.');
       }
     } catch (err) {
-      console.log(err);
+      this.logger.log('error', 'postConversion failed');
+      this.logger.log('error', err);
       throw new Error('Converted video is not valid.');
     }
   }
